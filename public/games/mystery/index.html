@@ -1,0 +1,583 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Last Train Out</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Special+Elite&display=swap">
+<style>
+/* One deliberate dark theme: Meridian Station at midnight. */
+:root {
+  color-scheme: dark;
+  --ground: #0b0d10;     /* wet slate at midnight */
+  --smoke: #14171c;      /* raised surfaces */
+  --smoke-hi: #1c2027;
+  --rule: #2c313a;
+  --keyline: rgb(220 215 204 / .14);
+  --silver: #dcd7cc;     /* silver-screen text */
+  --ash: #8e9096;
+  --typed: #d3cab6;      /* typewriter ink */
+  --lamp: #e2a84e;       /* sodium lamps, the departure board */
+  --stamp: #d9503f;      /* rubber stamp */
+  --flap-top: #1f2228;
+  --flap-bot: #17191e;
+  --display: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --prose: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --type: "Special Elite", "Courier New", monospace;
+  --tile: 19px;
+  --gut: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));   /* side gutter, clear of the notch */
+}
+[hidden] { display: none !important; }
+html, body { background: var(--ground); }
+body { margin: 0; padding-inline: var(--gut); color: var(--silver); font: 400 1.1875rem/1.65 var(--prose); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 3px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Atmosphere: lamp glow, rain, vignette, film grain */
+.atmos { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.atmos canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.glow { position: absolute; left: 50%; top: -35vh; width: min(1200px, 160vw); height: 85vh; transform: translateX(-50%); background: radial-gradient(closest-side, rgb(226 168 78 / .15), rgb(226 168 78 / .05) 55%, transparent); }
+.vignette { position: absolute; inset: 0; background: radial-gradient(130% 95% at 50% 30%, transparent 45%, rgb(0 0 0 / .72)); }
+.grain { position: fixed; inset: -50%; z-index: 30; pointer-events: none; opacity: .055; animation: grain 1.1s steps(5) infinite;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+@keyframes grain { 25% { transform: translate(-4%, 3%); } 50% { transform: translate(3%, -2%); } 75% { transform: translate(-2%, -4%); } 100% { transform: translate(4%, 2%); } }
+
+/* Departure board */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; margin-inline: calc(-1 * var(--gut)); padding: 10px var(--gut) 9px; background: var(--ground); border-bottom: 1px solid var(--rule); }
+.bar-in { max-width: 52rem; margin-inline: auto; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 16px; }
+.board { display: flex; gap: 14px; }
+.field { display: grid; gap: 4px; }
+.field small { font: 700 .62rem/1 var(--display); letter-spacing: .2em; text-transform: uppercase; color: var(--ash); }
+.tiles { display: flex; gap: 2px; perspective: 300px; }
+.tile { position: relative; display: grid; place-items: center; width: var(--tile); height: calc(var(--tile) * 1.45); border-radius: 2px; background: linear-gradient(var(--flap-top) 50%, var(--flap-bot) 50%); box-shadow: inset 0 -1px 0 rgb(0 0 0 / .5); color: var(--lamp); font: 700 calc(var(--tile) * 1.02)/1 var(--display); }
+.tile::after { content: ""; position: absolute; inset: 50% 0 auto; height: 1px; background: rgb(0 0 0 / .8); }
+.tile.flip { animation: flip .36s cubic-bezier(.3, .7, .3, 1) var(--d, 0ms) both; }
+@keyframes flip { from { transform: rotateX(-90deg); color: transparent; } 60% { color: var(--lamp); } }
+.notes-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px 0 12px; border: 1px solid var(--rule); border-radius: 3px; background: var(--smoke); cursor: pointer; font: 700 .78rem/1 var(--display); letter-spacing: .16em; text-transform: uppercase; }
+.notes-btn:hover { border-color: var(--lamp); }
+.count { min-width: 1.7em; padding: 4px 5px 3px; border-radius: 2px; background: var(--lamp); color: var(--ground); font: 400 .85rem/1 var(--type); letter-spacing: 0; text-align: center; }
+.notes-btn.pulse .count { animation: pulse .9s ease-out; }
+@keyframes pulse { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--lamp) 70%, transparent); } to { box-shadow: 0 0 0 12px transparent; } }
+@media (max-width: 899px) { .f-to, .f-plat { display: none; } }
+@media (max-width: 560px) { :root { --tile: 14px; } .f-dep, .notes-btn .lg { display: none; } }
+/* Phones: keep the small uppercase labels at 12px or more */
+@media (max-width: 560px), (pointer: coarse) { .field small, .cast small, .noted b, .file h3 { font-size: .75rem; } }
+
+/* The story column */
+.stage { position: relative; z-index: 1; max-width: 40rem; margin-inline: auto; padding-block: clamp(2.2rem, 7vh, 4.5rem) 6rem; }
+.stage.is-title { padding-top: clamp(3rem, 12vh, 7rem); }
+.stage p { margin: 0 0 1em; }
+.stage .kicker { margin-bottom: 1rem; font: 700 .8rem/1.2 var(--display); letter-spacing: .22em; text-transform: uppercase; color: var(--lamp); }
+.stage h1 { margin: 0 0 1.5rem; font: 900 clamp(2.6rem, 8vw, 3.8rem)/.92 var(--display); letter-spacing: .01em; text-transform: uppercase; text-wrap: balance; }
+.stage h1:focus, .block:focus { outline: none; }
+.block { scroll-margin-top: 96px; }
+.stage h1.title { margin-bottom: 1.8rem; font-size: clamp(3.8rem, 15vw, 6.6rem); line-height: .82; text-shadow: 0 0 .6em color-mix(in srgb, var(--lamp) 16%, transparent); }
+.title span { display: block; }
+.title span:last-child { color: var(--lamp); }
+.stage .lede { max-width: 28em; font-style: italic; font-size: clamp(1.25rem, 3.4vw, 1.5rem); line-height: 1.45; }
+.cast { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 18px; margin: 2.2rem 0 1.4rem; padding: 1.1rem 0; border-block: 1px solid var(--rule); }
+.cast small { grid-column: 1 / -1; font: 700 .68rem/1 var(--display); letter-spacing: .24em; text-transform: uppercase; color: var(--ash); }
+.cast b { display: block; font: 700 1.3rem/1.05 var(--display); letter-spacing: .07em; text-transform: uppercase; }
+.cast i { font-size: 1rem; color: var(--ash); }
+@media (max-width: 560px) { .cast { grid-template-columns: 1fr; } }
+.stage .meta { font: 700 .76rem/1.5 var(--display); letter-spacing: .18em; text-transform: uppercase; color: var(--ash); }
+.stage .noted { display: grid; gap: .35rem; margin: .2rem 0 1.2rem; padding: .7rem .9rem .75rem; border: 1px dashed var(--rule); background: color-mix(in srgb, var(--smoke) 85%, transparent); font: 400 .95rem/1.5 var(--type); color: var(--typed); }
+.noted b { font: 700 .66rem/1 var(--display); letter-spacing: .24em; text-transform: uppercase; color: var(--lamp); }
+.stage :is(.asked, .leads) { display: flex; align-items: center; gap: .9rem; margin: 2.2rem 0 1.1rem; font: 700 .8rem/1.3 var(--display); letter-spacing: .2em; text-transform: uppercase; color: var(--ash); }
+.asked::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+.stage .leads { margin-bottom: .9rem; }
+
+/* Choices: lines of questioning, and enamel station signs */
+.choices { display: grid; gap: 12px; margin-top: 2rem; }
+.leads + .choices { margin-top: 0; }
+.asks { display: grid; border-bottom: 1px solid var(--rule); }
+.ask { all: unset; box-sizing: border-box; display: block; position: relative; padding: .8rem .5rem .8rem 1.9rem; border-top: 1px solid var(--rule); cursor: pointer; font: italic 400 1.15rem/1.4 var(--prose); transition: color .15s, background .15s; }
+.ask::before { content: "—"; position: absolute; left: .3rem; font-style: normal; color: var(--lamp); }
+.ask:hover { color: var(--lamp); background: color-mix(in srgb, var(--smoke) 60%, transparent); }
+.sign { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .15rem 1rem; padding: .85rem 1.1rem .9rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--smoke); box-shadow: inset 0 0 0 3px var(--smoke), inset 0 0 0 4px var(--keyline); cursor: pointer; transition: border-color .15s, background .15s; }
+.sign b { font: 700 1.4rem/1.1 var(--display); letter-spacing: .09em; text-transform: uppercase; }
+.sign span { grid-column: 1; font: italic 400 1rem/1.35 var(--prose); color: var(--ash); }
+.sign::after { content: "→"; grid-column: 2; grid-row: 1 / span 2; font: 700 1.5rem/1 var(--display); color: var(--lamp); }
+.sign:hover:not(:disabled) { border-color: var(--lamp); background: var(--smoke-hi); box-shadow: inset 0 0 0 3px var(--smoke-hi), inset 0 0 0 4px var(--keyline); }
+.sign:hover:not(:disabled) b { color: var(--lamp); }
+.sign:disabled { cursor: default; opacity: .42; }
+.sign:disabled::after { content: "✓"; color: var(--ash); }
+.sign[data-tone="red"] { margin-top: .6rem; border-color: color-mix(in srgb, var(--stamp) 45%, var(--rule)); }
+.sign[data-tone="red"]::after { color: var(--stamp); }
+.sign[data-tone="red"]:hover { border-color: var(--stamp); }
+.sign[data-tone="red"]:hover b { color: var(--stamp); }
+
+/* The accusation */
+.stage h2 { margin: 2.4rem 0 .9rem; font: 700 .95rem/1.2 var(--display); letter-spacing: .2em; text-transform: uppercase; color: var(--lamp); }
+.file { font: 400 .95rem/1.5 var(--type); color: var(--typed); }
+.file h3 { margin: 1.3rem 0 .55rem; font: 700 .7rem/1 var(--display); letter-spacing: .22em; text-transform: uppercase; color: var(--lamp); }
+.file h3:first-child { margin-top: 0; }
+.file ul { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.file li { position: relative; padding-left: 1.1rem; }
+.file li::before { content: "–"; position: absolute; left: 0; color: var(--ash); }
+.file p { margin: 0; color: var(--ash); }
+.file.inline { padding: 1.1rem 1.2rem; border: 1px solid var(--rule); background: color-mix(in srgb, var(--smoke) 90%, transparent); }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 1.8rem; }
+@media (max-width: 560px) { .cards { grid-template-columns: 1fr; } }
+.card { all: unset; box-sizing: border-box; display: grid; align-content: start; gap: .4rem; padding: 1rem 1rem 1.05rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--smoke); cursor: pointer; transition: border-color .15s, background .15s; }
+.card b { font: 900 1.6rem/.95 var(--display); letter-spacing: .03em; text-transform: uppercase; }
+.card span { font: italic 400 .98rem/1.35 var(--prose); color: var(--ash); }
+.card em { margin-top: .5rem; font: 700 .74rem/1 var(--display); letter-spacing: .22em; text-transform: uppercase; color: var(--stamp); }
+.card:hover { border-color: var(--stamp); background: var(--smoke-hi); }
+
+/* Endings */
+.stamp { display: inline-block; margin: .4rem 0 1.4rem; padding: .28em .55em .2em; border: 3px solid currentColor; outline: 1px solid currentColor; outline-offset: 3px; font: 900 clamp(1.9rem, 7vw, 2.8rem)/1 var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--stamp); transform: rotate(-4deg); }
+.truth { margin-top: 2.8rem; border-top: 1px solid var(--rule); }
+.truth h2:first-child { margin-top: 1.6rem; }
+.clues { display: grid; gap: .6rem; margin: 0 0 1.6rem; padding: 0; list-style: none; }
+.clues li { position: relative; padding-left: 1.8rem; font-size: 1.05rem; line-height: 1.45; }
+.clues li::before { position: absolute; left: 0; top: .05em; font: 700 1.05rem/1.3 var(--display); }
+.clues .got::before { content: "✓"; color: var(--lamp); }
+.clues .miss { color: var(--ash); }
+.clues .miss::before { content: "✗"; color: var(--stamp); }
+
+/* Case notes sheet */
+.sheet { box-sizing: border-box; width: min(27rem, 100%); max-width: 100%; height: 100%; max-height: 100%; margin: 0 0 0 auto; padding: 0; border: 0; border-left: 1px solid var(--rule); background: var(--smoke); color: var(--silver); }
+.sheet[open] { animation: slide .3s cubic-bezier(.2, .8, .2, 1); }
+@keyframes slide { from { opacity: 0; transform: translateX(32px); } }
+.sheet::backdrop { background: rgb(4 5 7 / .64); }
+.sheet-in { box-sizing: border-box; min-height: 100%; padding: calc(env(safe-area-inset-top, 0px) + 1.2rem) max(1.3rem, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 2.2rem) 1.3rem; }
+.sheet-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.4rem; padding-bottom: 1rem; border-bottom: 1px solid var(--rule); }
+.sheet-head h2 { margin: 0; font: 900 1.9rem/1 var(--display); letter-spacing: .04em; text-transform: uppercase; }
+.sheet-head p { margin: .45rem 0 0; font: 400 .8rem/1.4 var(--type); color: var(--ash); }
+.close { all: unset; flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--rule); border-radius: 3px; cursor: pointer; font: 400 1.6rem/1 var(--prose); }
+.close:hover { border-color: var(--lamp); color: var(--lamp); }
+
+/* Scene reveals — only after a click; the first screen loads at rest */
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+@keyframes thunk { from { opacity: 0; transform: rotate(-4deg) scale(1.7); } }
+.reveal :is(.kicker, h1, h2, p, .sign, .ask, .card, .cast, .file, .clues li) { animation: rise .6s cubic-bezier(.2, .7, .2, 1) calc(min(var(--i, 0), 16) * 65ms) both; }
+.reveal .stamp { animation: thunk .42s cubic-bezier(.3, 1.5, .5, 1) calc(var(--i, 0) * 65ms) both; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal *, .tile.flip, .grain, .sheet[open], .pulse .count { animation: none !important; }
+}
+</style>
+
+<div class="atmos" aria-hidden="true"><div class="glow"></div><canvas id="rain"></canvas><div class="vignette"></div></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="board" aria-hidden="true">
+      <div class="field" data-f="now"><small>Now</small><div class="tiles"></div></div>
+      <div class="field f-dep" data-f="dep"><small>Train</small><div class="tiles"></div></div>
+      <div class="field f-to" data-f="to"><small>To</small><div class="tiles"></div></div>
+      <div class="field f-plat" data-f="plat"><small>Plat</small><div class="tiles"></div></div>
+      <div class="field" data-f="status"><small>Status</small><div class="tiles"></div></div>
+    </div>
+    <p class="sr" id="board-sr" aria-live="polite"></p>
+    <button class="notes-btn" id="notes-btn" data-act="notes" hidden><span class="lg">Case</span> notes <span class="count" id="count">0</span></button>
+  </div>
+</header>
+
+<main class="stage" id="stage"></main>
+
+<dialog class="sheet" id="notes" aria-labelledby="notes-h" closedby="any">
+  <div class="sheet-in">
+    <div class="sheet-head">
+      <div><h2 id="notes-h">Case notes</h2><p>File 47-1130 · Marsh, Julian · Homicide</p></div>
+      <button class="close" data-act="close" aria-label="Close case notes">×</button>
+    </div>
+    <div class="file" id="file"></div>
+  </div>
+</dialog>
+
+<script>
+const MAX = 4, T0 = 23 * 60 + 45, DEPART = 24 * 60 + 10;   // four leads; arrive 11:45 P.M.; the 12:10 leaves
+const WORDS = ['no', 'one', 'two', 'three', 'four'];
+
+// Case notes: [group, text]. Order within a group is print order.
+const FACTS = {
+  rain:       ['timeline', `11:00 — Rain begins. First drop all day.`],
+  window:     ['timeline', `11:10 — Julian buys a paper and walks onto Platform 4. 11:30 — the porter finds him dead.`],
+  appointment:['timeline', `Julian went down Platform 4 like a man with an appointment. (Sal)`],
+  nobodyout:  ['timeline', `After the rain started, nobody went out the front doors. (Sal)`],
+  hatpin:     ['scene', `Weapon: a lady’s hatpin with a black jet bead.`],
+  ledger:     ['scene', `In his fist: a torn ledger corner, “BLUE LANTERN — ACCOUNTS.” Something thick ripped from his coat. Wallet untouched.`],
+  exposed:    ['scene', `The bench is past the canopy, open to the rain. Nobody comes back from there dry — not without an umbrella.`],
+  pinmissing: ['vera', `The hatpin is hers. It vanished from her dressing room between 10 and 11. Milo was in and out with his ledgers.`],
+  note:       ['vera', `Julian was leaving town without her: “Don’t come to the station, V.”`],
+  cab:        ['vera', `Came by cab from the club. Receipt stamped 11:33. Soaked from the cab stand.`],
+  veraarrive: ['vera', `Came in off the street at 11:35, soaking wet. (Sal)`],
+  umbrella:   ['milo', `Dry as a bone. His umbrella — silver handle, “M.C.” — is dripping wet.`],
+  miloalibi:  ['milo', `Says he’s sat at the counter since 10:30. “Haven’t moved off this stool.”`],
+  dotgap:     ['milo', `Dot was mopping the storeroom 11:10–11:30. No one watched Milo in that time.`],
+  books:      ['milo', `Keeps the club’s books. Julian was taking “a misunderstanding in the books” to Mr. Voss in Chicago.`],
+  blood:      ['eddie', `Found the body at 11:30. Blood on his cuff from checking for a pulse.`],
+  debt:       ['eddie', `Owed Julian $600. Julian’s men broke two of his fingers last week.`],
+  maillog:    ['eddie', `Baggage log: signed for mail sacks at 11:12, 11:20 and 11:27 — the far end of the station.`],
+};
+const GROUPS = { timeline: 'Timeline', scene: 'The body', vera: 'Vera Lane · the singer', milo: 'Milo Crane · the partner', eddie: 'Eddie Rourke · the porter' };
+const SUSPECTS = {
+  vera:  ['Vera Lane', 'the singer', 'Sings at the Lantern. Julian’s girl.'],
+  milo:  ['Milo Crane', 'the partner', 'Julian’s partner. Keeps the books.'],
+  eddie: ['Eddie Rourke', 'the porter', 'Station porter. Found the body.'],
+};
+
+// Story lines: plain strings are paragraphs; '#id' files a case note.
+const INTRO = [
+  `The rain started at eleven sharp — the first drop all day — and it hasn’t let up since. It hammers the glass roof of Meridian Station a hundred feet overhead and still finds its way down your collar.`,
+  '#rain',
+  `Patrolman Doyle meets you under the big clock, water running off the brim of his cap.`,
+  `“Julian Marsh,” he says. “Owns the Blue Lantern, over on Fifth. Bought a paper at the newsstand at ten past eleven and walked out onto Platform 4. The porter found him at half past on the last bench, sitting up like he was waiting for a train. Somebody put a lady’s hatpin through his heart.”`,
+  '#window', '#hatpin',
+  `Behind him the departure board clatters over: 12:10 — CHICAGO — PLATFORM 4. The last train out tonight.`,
+  `“Three people in this station had reason to want him dead,” Doyle says, “and when that train pulls out, any one of them can be on it. Railroad won’t hold it. Not for a dead nightclub man.”`,
+  `Twenty-five minutes. Every lead costs five — and you’ll need the last five to make the arrest.`,
+];
+const HUB = [
+  `Rain drums on the glass a hundred feet up. A loudspeaker coughs out a platform change nobody listens to.`,
+  `Ten to midnight by the big clock. A baggage cart squeals across the marble like it’s being murdered too.`,
+  `Five to midnight. Out on Platform 4, the 12:10 wakes up and starts breathing steam.`,
+  `Midnight. The conductor checks his watch and doesn’t like what it tells him.`,
+];
+const PLACES = {
+  body: { sign: 'Platform 4', sub: 'The body, out past the canopy.', where: 'Platform 4', title: 'The Last Bench', rain: 1,
+    text: [
+      `You walk the length of Platform 4, past the dark cars of the 12:10, to where the canopy gives out and the sky takes over.`,
+      `Julian Marsh sits on the last bench with his chin on his chest, soaked through, the late edition gone to pulp in his lap. His umbrella lies upturned beside him, filling with rain. Eight inches of steel stand out of his lapel, capped with a bead of black jet.`,
+    ],
+    asks: [
+      ['Go through his pockets', [
+        `His wallet’s still there, two hundred in fives and tens — nobody robbed him. A one-way ticket on the 12:10 to Chicago. The lining of his inside pocket is torn wide open; something thick was ripped out of it.`,
+        `His right fist is clenched. You work it open. Inside is a torn corner of ledger paper, figures in a small, neat hand. Across the top: BLUE LANTERN — ACCOUNTS.`,
+        '#ledger',
+      ]],
+      ['Look over the scene', [
+        `The canopy ends thirty feet back. Out here there’s no roof at all — just you, the dead man, and rain coming down like it’s paid by the hour.`,
+        `Whoever stood with Julian stood close, and stood a while. The rain has taken their footprints. But nobody walks out to the end of Platform 4 tonight and comes back dry.`,
+        `Not unless they brought an umbrella.`,
+        '#exposed',
+      ]],
+    ] },
+  vera: { sign: 'Waiting room', sub: 'Vera Lane, the singer. Julian’s girl.', where: 'The waiting room', title: 'Vera Lane', rain: .5,
+    text: [
+      `The waiting room is hard oak benches and harder light. Vera Lane sits alone beneath a sign that says NO SMOKING, smoking.`,
+      `Her fox fur is soaked through, her hair plastered to her cheek, her mascara running in two thin black rivers. She hasn’t cried. She looks like a woman saving it for later.`,
+    ],
+    asks: [
+      ['Show her the hatpin', [
+        `Something in her face goes very still. “That’s mine. Or it was. It sat on my dressing table at the Lantern at ten o’clock. When I dressed to leave at eleven, it was gone.”`,
+        `“Who’s been in your dressing room tonight?”`,
+        `“Who hasn’t? The band. Frankie from the bar. Milo, in and out with his precious ledgers.” A thin smile. “Only a fool leaves her own hatpin in a man, Detective. I’m a lot of things.”`,
+        '#pinmissing',
+      ]],
+      ['Ask why she’s soaking wet', [
+        `She hands you a folded note: <em>Don’t come to the station, V. It’s better this way. —J.</em>`,
+        `“So I came. Cab from the Lantern — and the cab stand out front hasn’t had an awning since before the war.” She digs a soggy Checker Cab receipt from her purse. Time-stamped 11:33.`,
+        `“I got here too late to kill him, Detective. Too late for anything.”`,
+        '#note', '#cab',
+      ]],
+    ] },
+  milo: { sign: 'Lunch counter', sub: 'Milo Crane, the partner. Keeps the books.', where: 'The lunch counter', title: 'Milo Crane', rain: .5,
+    text: [
+      `The lunch counter glows like a jukebox in the dark. Milo Crane sits at the far end: a small, careful man in a gray suit, the kind who carries an umbrella under a clear sky. He is dry as a tax return.`,
+      `The umbrella hangs from the counter beside him — black silk, silver handle, engraved M.C. It drips, slow and steady, into a puddle on the tile.`,
+      '#umbrella',
+      `Behind the counter, a waitress named Dot wipes the same patch of steel over and over.`,
+    ],
+    asks: [
+      ['Ask where he’s been', [
+        `“Right here since half past ten.” He turns his cup a quarter turn on its saucer. “I came to see Julian off. Twelve years we were partners. I haven’t moved off this stool all night. Ask Dot.”`,
+        `Dot shrugs. “He was here when I went in back at ten past eleven — storeroom roof leaks like a sieve when it rains, I was mopping till half past. He was here when I came out.”`,
+        '#miloalibi', '#dotgap',
+      ]],
+      ['Ask about Julian’s trip', [
+        `“Chicago. To see Mr. Voss — the money behind the Lantern.” Milo sighs like a man discussing the weather. “Julian had some notion about a misunderstanding in the books.”`,
+        `“You keep the books.”`,
+        `“I do, Detective. And they’re in perfect order.” His hand rests on the briefcase at his feet, gentle as a man petting a cat.`,
+        '#books',
+      ]],
+    ] },
+  eddie: { sign: 'Baggage room', sub: 'Eddie Rourke, the porter. Found the body.', where: 'The baggage room', title: 'Eddie Rourke', rain: .5,
+    text: [
+      `The baggage room smells of wet canvas and cheap tobacco. Eddie Rourke, the porter, sits on a pile of mail sacks, soaked to the skin, his right hand bound in a splint. There’s blood on his cuff.`,
+      `He looks at you like a man who’s been waiting all night for the other shoe to drop — and you’re the shoe.`,
+    ],
+    asks: [
+      ['Ask about the blood', [
+        `“I found him, that’s all!” The words trip over each other. “I went out at half past to set the step boxes for the 12:10. Saw a fella sitting out in the rain at the far end, figured a drunk, went to roust him. Then I seen the pin.”`,
+        `He stares at his cuff. “I checked for a pulse. There wasn’t one.”`,
+        '#blood',
+      ]],
+      ['Ask about his hand', [
+        `“Mr. Marsh’s boys.” He lifts the splint. “I owed him six hundred from the card game in back of the Lantern. Last Tuesday they broke two fingers so I’d remember. I can’t hold a fork.”`,
+        `He jerks his chin at a clipboard on the wall. “And I was right here signing for mail sacks all night. Look for yourself.”`,
+        `You do. Eddie’s crooked signature, three times: 11:12. 11:20. 11:27. The baggage room is at the far end of the station from Platform 4.`,
+        '#debt', '#maillog',
+      ]],
+    ] },
+  sal: { sign: 'Newsstand', sub: 'Sal. Twenty years behind that counter.', where: 'The newsstand', title: 'Sal', rain: .6,
+    text: [
+      `Sal’s newsstand is a lit box in the middle of the concourse: papers weighted with bricks, a radio murmuring a ballgame from the coast. Twenty years behind that counter. Nothing moves through Meridian Station without passing Sal.`,
+    ],
+    asks: [
+      ['Ask about Julian Marsh', [
+        `“Mr. Marsh? Bought the late edition at ten past eleven, same as every Friday. Tipped me a quarter.” Sal shakes his head. “Had his umbrella up before he was out from under the roof and went straight down Platform 4. Like a man with an appointment he didn’t want to keep.”`,
+        '#appointment',
+      ]],
+      ['Ask who came and went', [
+        `“After the rain started? Nobody went out the front doors — not a soul. Who would?” He counts on his fingers. “Eddie came tearing in off the platforms at half past, white as a sheet, hollering for the stationmaster. Miss Lane, the singer, came in off the street at 11:35, wet as a drowned cat.”`,
+        `He nods at the iron pillar beside his stand. “Can’t see the lunch counter from here, if you’re wondering. Never could.”`,
+        '#nobodyout', '#veraarrive',
+      ]],
+    ] },
+};
+const ENDINGS = {
+  milo: { stamp: 'Case closed', title: 'The Dry Man', rain: .22, text: [
+    `You lift the umbrella off the counter. Water runs down your wrist and into your sleeve.`,
+    `“Funny thing, Milo. You got here at half past ten. The rain didn’t start till eleven. And you never left that stool.”`,
+    `He smiles like a man looking at a bad hand. “I stepped out for a cigarette.”`,
+    `You tap the ashtray at his elbow, three butts deep. “In this rain? With an ashtray right here? You walked out to the end of Platform 4 while Dot was mopping the storeroom. Julian was waiting for you.”`,
+    `Doyle thumbs open the briefcase. Inside is the Blue Lantern ledger, one page with its corner torn away — the corner Julian Marsh was holding when he died.`,
+    `“Voss would have killed me,” Milo says quietly. “You don’t know what he does to bookkeepers.”`,
+    `“No,” you say, and close the cuffs. “But I know what the State does to murderers.”`,
+    `The 12:10 pulls out on time. Vera Lane isn’t on it. She’s standing at the end of Platform 4 in the thinning rain, and for the first time tonight, she’s crying.`,
+  ] },
+  vera: { stamp: 'Case unsolved', title: 'The Wrong Woman', rain: 1, text: [
+    `The cuffs close around Vera Lane’s wrists with a sound like a door shutting. Her hatpin, her motive, her soaking fur. The papers love it.`,
+    `By Monday a cabbie swears he dropped her at Meridian at 11:33, and Sal swears she came through the doors at 11:35 — five minutes after the porter found the body. The DA drops the charge by Wednesday. Vera leaves town on the first train out and never looks back.`,
+    `Across town, in a warm office above the Blue Lantern, a small, careful man feeds a ledger into the stove, one page at a time.`,
+  ] },
+  eddie: { stamp: 'Case unsolved', title: 'The Wrong Man', rain: 1, text: [
+    `Eddie Rourke goes quietly, the way men go when life has already taken everything worth fighting for. Blood on his cuff, a grudge in his pocket, and he found the body. It writes itself.`,
+    `It unwrites itself just as fast. The baggage log has his crooked signature at 11:12, 11:20 and 11:27 — the far end of the station, while Julian Marsh was dying on Platform 4. And the police surgeon says a man with two broken fingers couldn’t close his hand around a hatpin, let alone drive one through a winter coat.`,
+    `They let Eddie go on Friday. The railroad lets him go on Saturday. Across town, a small, careful man feeds a ledger into the stove, one page at a time.`,
+  ] },
+};
+const TRUTH = `Milo Crane had been skimming the Blue Lantern for years. When Julian found out and booked the 12:10 to take the ledger to Mr. Voss, Milo lifted Vera’s hatpin from her dressing room, reached the station at half past ten — before the rain — and asked Julian to hear him out at the end of Platform 4. At ten past eleven, with Dot in the storeroom, he walked out under his umbrella. He came back without a drop on him. Only the umbrella was wet.`;
+// [facts needed ('a|b' = either), clue]
+const KEYS = [
+  [['rain', 'miloalibi', 'umbrella'], `Milo got there before the rain and swore he never left his stool — but his umbrella was dripping.`],
+  [['dotgap'], `Dot was in the storeroom from 11:10 to 11:30. Nobody saw Milo during the murder.`],
+  [['exposed'], `The murder spot was open to the sky. Nobody came back from it dry without an umbrella.`],
+  [['ledger', 'books'], `Julian died clutching a page of the club’s ledger. Milo kept the books.`],
+  [['pinmissing'], `Vera’s hatpin vanished while Milo was in and out of her dressing room.`],
+  [['cab|veraarrive'], `Vera reached the station at 11:35, after the porter found the body.`],
+  [['maillog'], `Eddie was signing the baggage log at the far end of the station.`],
+];
+const RAIN = { title: .75, intro: .85, hub: .6, accuse: .9 };
+
+// ponytail: load-time story lint instead of a test suite; a typo'd fact id fails loudly in the console.
+{
+  const marks = [INTRO, ...Object.values(PLACES).flatMap(p => [p.text, ...p.asks.map(a => a[1])])].flat().filter(l => l[0] === '#').map(l => l.slice(1));
+  KEYS.flatMap(k => k[0].flatMap(s => s.split('|'))).concat(marks).forEach(id => console.assert(FACTS[id], `Unknown fact: ${id}`));
+  Object.keys(FACTS).forEach(id => console.assert(marks.includes(id), `Fact never found: ${id}`));
+}
+
+const $ = s => document.querySelector(s);
+const stage = $('#stage'), dialog = $('#notes'), notesBtn = $('#notes-btn');
+const blank = () => ({ screen: 'title', place: null, end: null, visits: [], asked: [], facts: [] });
+let S = blank(), anim = null, seen = 0;
+
+const now = () => T0 + 5 * S.visits.length;
+function clock(m, short) {
+  const h = Math.floor(m / 60) % 24, mm = String(m % 60).padStart(2, '0'), h12 = h % 12 || 12;
+  if (short) return `${h12}:${mm}`;
+  return h === 0 && mm === '00' ? 'Midnight' : `${h12}:${mm} ${h < 12 ? 'A.M.' : 'P.M.'}`;
+}
+const noted = id => `<p class="noted"><b>Noted</b>${FACTS[id][1]}</p>`;
+const lines = arr => arr.map(l => l[0] === '#' ? noted(l.slice(1)) : `<p>${l}</p>`).join('');
+const sign = (act, label, sub, attrs = '') => `<button class="sign" data-act="${act}" ${attrs}><b>${label}</b><span>${sub}</span></button>`;
+const gain = arr => arr.forEach(l => { const id = l.slice(1); if (l[0] === '#' && !S.facts.includes(id)) S.facts.push(id); });
+const has = spec => spec.split('|').some(id => S.facts.includes(id));
+
+function file() {
+  const html = Object.entries(GROUPS).map(([g, name]) => {
+    const ids = Object.keys(FACTS).filter(id => FACTS[id][0] === g && S.facts.includes(id));
+    return ids.length ? `<h3>${name}</h3><ul>${ids.map(id => `<li>${FACTS[id][1]}</li>`).join('')}</ul>` : '';
+  }).join('');
+  return html || '<p>Nothing yet. Walk the concourse.</p>';
+}
+
+const SCREENS = {
+  title: () => `
+    <p class="kicker">Meridian Station · Friday, 11:45 P.M.</p>
+    <h1 class="title" tabindex="-1"><span>Last</span> <span>Train</span> <span>Out</span></h1>
+    <p class="lede">A man is dead at the end of Platform 4. Three people had reason to kill him, and the last train of the night leaves in twenty-five minutes.</p>
+    <div class="cast"><small>Featuring</small>${Object.values(SUSPECTS).map(([n, r]) => `<div><b>${n}</b><i>${r}</i></div>`).join('')}</div>
+    <p class="meta">About five minutes · Five leads, time for four · One accusation</p>
+    <div class="choices">${sign('start', 'Take the case', 'Step in out of the rain.')}</div>`,
+
+  intro: () => `
+    <p class="kicker">Meridian Station · 11:45 P.M.</p>
+    <h1 tabindex="-1">The Rain Started at Eleven</h1>
+    ${lines(INTRO)}
+    <div class="choices">${sign('hub', 'Walk the concourse', 'Five leads. Time for four.')}</div>`,
+
+  hub: () => {
+    const v = S.visits.length, left = MAX - v;
+    return `
+    <p class="kicker">The concourse · ${clock(now())}</p>
+    <h1 tabindex="-1">The Concourse</h1>
+    <p>${HUB[v]}</p>
+    <p class="leads">${left === 1 ? 'Time for one more lead. Make it count.' : `Time for ${WORDS[left]} more leads.`}</p>
+    <div class="choices">
+      ${Object.entries(PLACES).map(([id, p]) => {
+        const at = S.visits.indexOf(id), t = clock(T0 + 5 * (at + 1));
+        return at < 0 ? sign('visit', p.sign, p.sub, `data-id="${id}"`) : sign('visit', p.sign, `Visited at ${t === 'Midnight' ? 'midnight.' : t}`, 'disabled');
+      }).join('')}
+      ${sign('accuse', 'Name the killer', 'Doyle’s waiting with the cuffs.', 'data-tone="red"')}
+    </div>`;
+  },
+
+  place: () => {
+    const id = S.place, p = PLACES[id];
+    const asked = S.asked.filter(k => k.startsWith(id)).map(k => +k.slice(id.length));
+    const open = p.asks.map((_, i) => i).filter(i => !asked.includes(i));
+    const last = S.visits.length >= MAX;
+    return `
+    <p class="kicker">${p.where} · ${clock(now())}</p>
+    <h1 tabindex="-1">${p.title}</h1>
+    <div class="block">${lines(p.text)}</div>
+    ${asked.map((i, n) => `<div class="block${anim === 'ask' && n === asked.length - 1 ? ' reveal new' : ''}" tabindex="-1"><p class="asked">${p.asks[i][0]}</p>${lines(p.asks[i][1])}</div>`).join('')}
+    <div class="choices${anim === 'ask' ? ' reveal' : ''}">
+      ${open.length ? `<div class="asks">${open.map(i => `<button class="ask" data-act="ask" data-i="${i}">${p.asks[i][0]}</button>`).join('')}</div>` : ''}
+      ${last ? sign('hub', 'Last call', 'The 12:10 is boarding.', 'data-tone="red"') : sign('hub', 'Back to the concourse', `${DEPART - now()} minutes until the 12:10.`)}
+    </div>`;
+  },
+
+  accuse: () => {
+    const last = S.visits.length >= MAX;
+    return `
+    <p class="kicker">The concourse · ${clock(now())}</p>
+    <h1 tabindex="-1">Name the Killer</h1>
+    ${last
+      ? `<p>12:05. A conductor’s voice rolls down the concourse: “Twelve-ten for Chicago — all aboard!”</p>
+         <p>That’s all the time there is. Doyle falls in beside you, turning the cuffs over in his hands. “Well, Detective? Who killed Julian Marsh?”</p>`
+      : `<p>Doyle falls in beside you, turning the cuffs over in his hands. “Clock’s still running, Detective. But if you’ve got it — who killed Julian Marsh?”</p>`}
+    <h2>Your case notes</h2>
+    <div class="file inline">${file()}</div>
+    <div class="cards">${Object.entries(SUSPECTS).map(([id, [n, , r]]) => `<button class="card" data-act="name" data-id="${id}" aria-label="Accuse ${n}"><b>${n}</b><span>${r}</span><em>Accuse</em></button>`).join('')}</div>
+    ${last ? '' : `<div class="choices">${sign('hub', 'Not yet', 'Back to the concourse.')}</div>`}`;
+  },
+
+  end: () => {
+    const e = ENDINGS[S.end];
+    return `
+    <p class="kicker">Meridian Station · 12:10 A.M.</p>
+    <div class="stamp">${e.stamp}</div>
+    <h1 tabindex="-1">${e.title}</h1>
+    ${lines(e.text)}
+    <section class="truth">
+      ${S.end === 'milo' ? '' : `<h2>What really happened</h2><p>${TRUTH}</p>`}
+      <h2>The clues that cracked it</h2>
+      <ul class="clues">${KEYS.map(([need, t]) => {
+        const got = need.every(has);
+        return `<li class="${got ? 'got' : 'miss'}"><span class="sr">${got ? 'Found: ' : 'Missed: '}</span>${t}</li>`;
+      }).join('')}</ul>
+      <p class="meta">You found ${S.facts.length} of ${Object.keys(FACTS).length} clues and followed ${S.visits.length} of 5 leads.</p>
+    </section>
+    <div class="choices">${sign('start', 'Take the case again', 'Same night. Same rain. Different leads.')}</div>`;
+  },
+};
+
+function drawBoard() {
+  const s = S.screen, left = DEPART - now();
+  const status = s === 'title' ? 'ON TIME' : s === 'end' ? 'DEPARTED' : left <= 5 ? 'BOARDING' : `${left} MIN`;
+  const fields = { now: s === 'end' ? '12:10' : clock(now(), true), dep: '12:10', to: 'CHICAGO', plat: '4', status: status.padEnd(8) };
+  for (const [k, txt] of Object.entries(fields)) {
+    const box = $(`[data-f="${k}"] .tiles`), prev = box.dataset.v;
+    if (prev === txt) continue;
+    box.dataset.v = txt;
+    box.innerHTML = [...txt].map((ch, i) => `<span class="tile${prev && prev[i] !== ch ? ' flip' : ''}" style="--d:${i * 50}ms">${ch.trim()}</span>`).join('');
+  }
+  $('#board-sr').textContent = `${s === 'end' ? '12:10 A.M.' : clock(now())}. The 12:10 to Chicago, platform 4: ${status.toLowerCase().replace('min', 'minutes')}.`;
+}
+
+// ponytail: every click re-renders the whole screen from S; a text game never needs more.
+const SEL = '.kicker, h1, h2, p, .stamp, .sign, .ask, .card, .cast, .file, .clues li';
+function render() {
+  stage.className = `stage${S.screen === 'title' ? ' is-title' : ''}${anim === 'screen' ? ' reveal' : ''}`;
+  stage.innerHTML = SCREENS[S.screen]();
+  let i = 0;
+  (anim === 'screen' ? [stage] : [...stage.querySelectorAll('.reveal')])
+    .forEach(r => r.querySelectorAll(SEL).forEach(el => el.style.setProperty('--i', i++)));
+  drawBoard();
+  $('#count').textContent = S.facts.length;
+  notesBtn.hidden = S.screen === 'title';
+  if (S.facts.length > seen) { notesBtn.classList.remove('pulse'); void notesBtn.offsetWidth; notesBtn.classList.add('pulse'); }
+  seen = S.facts.length;
+  rain.to(S.screen === 'place' ? PLACES[S.place].rain : S.screen === 'end' ? ENDINGS[S.end].rain : RAIN[S.screen]);
+  if (anim === 'screen') { scrollTo(0, 0); stage.querySelector('h1').focus({ preventScroll: true }); }
+  if (anim === 'ask') {
+    const b = stage.querySelector('.new');
+    b.focus({ preventScroll: true });
+    b.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
+}
+function go(kind = 'screen') { anim = kind; render(); anim = null; }
+
+const ACT = {
+  start() { S = blank(); S.screen = 'intro'; gain(INTRO); go(); },
+  hub() { S.screen = S.visits.length >= MAX ? 'accuse' : 'hub'; go(); },
+  visit({ id }) { S.visits.push(id); S.place = id; S.screen = 'place'; gain(PLACES[id].text); go(); },
+  ask({ i }) { S.asked.push(S.place + i); gain(PLACES[S.place].asks[i][1]); go('ask'); },
+  accuse() { S.screen = 'accuse'; go(); },
+  name({ id }) { S.end = id; S.screen = 'end'; go(); },
+  notes() { $('#file').innerHTML = file(); dialog.showModal(); },
+  close() { dialog.close(); },
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (b && !b.disabled) ACT[b.dataset.act](b.dataset);
+});
+dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });   // backdrop
+
+// Rain: three parallax layers of streaks, thinned or thickened per scene.
+const rain = (() => {
+  const c = $('#rain'), g = c.getContext('2d'), calm = matchMedia('(prefers-reduced-motion: reduce)');
+  const LAYERS = [ // share, min/max length (px), speed (px/s), alpha, width
+    [.55, 9, 14, 520, .10, 1], [.30, 16, 24, 760, .17, 1], [.15, 26, 40, 1050, .26, 1.4]];
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  let W = 0, H = 0, drops = [], level = .75, target = .75, t0 = 0, running = false;
+  function size() {
+    const d = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    c.width = W * d; c.height = H * d; g.setTransform(d, 0, 0, d, 0, 0);
+    const n = Math.min(450, Math.round(W * H / 4200));
+    drops = LAYERS.map(([share, lo, hi, v]) => Array.from({ length: Math.round(n * share) },
+      () => ({ x: rnd(0, W * 1.3), y: rnd(-H, H), len: rnd(lo, hi), v: v * rnd(.85, 1.15), k: Math.random() })));
+  }
+  function frame(t) {
+    const dt = Math.min((t - t0) / 1000, .05) || 0; t0 = t;
+    level += (target - level) * Math.min(1, dt * 1.2);
+    const wind = .17 + .05 * Math.sin(t / 5200);
+    g.clearRect(0, 0, W, H);
+    drops.forEach((layer, li) => {
+      g.beginPath();
+      for (const d of layer) {
+        d.y += d.v * dt; d.x -= d.v * wind * dt;
+        if (d.y - d.len > H || d.x + d.len < 0) { d.y = -d.len - rnd(0, 120); d.x = rnd(0, W + H * wind); }
+        if (d.k > level) continue;
+        g.moveTo(d.x, d.y); g.lineTo(d.x + d.len * wind, d.y - d.len);
+      }
+      g.strokeStyle = `rgba(196, 208, 224, ${LAYERS[li][4]})`; g.lineWidth = LAYERS[li][5]; g.stroke();
+    });
+    if (calm.matches) running = false; else requestAnimationFrame(frame);
+  }
+  function kick() { if (!running) { running = true; t0 = performance.now(); requestAnimationFrame(frame); } }
+  addEventListener('resize', () => { size(); kick(); });
+  calm.addEventListener('change', kick);
+  size(); kick();
+  return { to(v) { target = v; if (calm.matches) level = v; kick(); } };
+})();
+
+// Boot, carrying game state across republishes when the viewer supports it.
+function boot(data) {
+  const own = (o, k) => typeof k === 'string' && Object.hasOwn(o, k);
+  const ok = data && own(SCREENS, data.screen) && ['visits', 'asked', 'facts'].every(k => Array.isArray(data[k]))
+    && (data.screen !== 'place' || own(PLACES, data.place)) && (data.screen !== 'end' || own(ENDINGS, data.end));
+  S = ok ? { ...blank(), ...data } : blank();
+  seen = S.facts.length;
+  render();
+}
+document.fonts.load('1em "Special Elite"');   // title screen doesn't use it; fetch before the first case note
+window.claude?.hot?.snapshot?.(() => S);
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+</script>

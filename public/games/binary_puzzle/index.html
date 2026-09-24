@@ -1,0 +1,672 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bitflip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Martian+Mono:wght@400;500&family=Michroma&display=swap">
+<style>
+  :root {
+    --ground: #d8dce2;
+    --ground-2: #f3f4f6;
+    --spot: rgb(255 255 255 / .9);
+    --ink: #16181b;
+    --muted: #59606a;
+    --line: #c3c8cf;
+    --key: #eef0f3;
+    --key-edge: #a9afb8;
+    --key-hi: rgb(255 255 255 / .85);
+    --latch: #26282c;
+    --latch-ink: #efe8da;
+    --accent: #2f56c9;
+    --cast: rgb(20 24 32 / .42);
+    /* The board is an object: same materials in either theme. */
+    --slab: #26282c;
+    --slab-hi: #35383d;
+    --slab-lo: #1a1b1e;
+    --well: #111214;
+    --edge: #3a3833;
+    --bone: #efe8da;
+    --bone-lo: #cbbfa8;
+    --bone-ink: #2a2620;
+    --cobalt: #2f56c9;
+    --cobalt-hi: #7f9cf5;
+    --cobalt-lo: #1a3380;
+    --cobalt-ink: #f4efe6;
+    --ok: #4fd487;
+    --bad: #ff4b3e;
+    --ring: #a9bcff;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0d0f12;
+      --ground-2: #191d23;
+      --spot: rgb(120 145 210 / .17);
+      --ink: #ebe7de;
+      --muted: #949ba6;
+      --line: #2a2f37;
+      --key: #20242a;
+      --key-edge: #060709;
+      --key-hi: rgb(255 255 255 / .08);
+      --latch: #efe8da;
+      --latch-ink: #16181b;
+      --accent: #93aaff;
+      --cast: rgb(0 0 0 / .7);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0d0f12;
+    --ground-2: #191d23;
+    --spot: rgb(120 145 210 / .17);
+    --ink: #ebe7de;
+    --muted: #949ba6;
+    --line: #2a2f37;
+    --key: #20242a;
+    --key-edge: #060709;
+    --key-hi: rgb(255 255 255 / .08);
+    --latch: #efe8da;
+    --latch-ink: #16181b;
+    --accent: #93aaff;
+    --cast: rgb(0 0 0 / .7);
+    color-scheme: dark;
+  }
+
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    overflow-x: clip;
+    background:
+      radial-gradient(55% 60% at 36% 48%, var(--spot), transparent 72%),
+      linear-gradient(180deg, var(--ground-2), var(--ground));
+    color: var(--ink);
+    font: 400 15px/1.5 Archivo, "Helvetica Neue", Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .app {
+    box-sizing: border-box;
+    height: 100%;
+    height: 100dvh;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding-inline: max(32px, env(safe-area-inset-left)) max(32px, env(safe-area-inset-right));
+    padding-block: 28px;
+    display: grid;
+    grid-template: "stage head" auto "stage panel" 1fr / minmax(0, 1fr) minmax(280px, 360px);
+    column-gap: 40px;
+  }
+
+  /* ---------- header & panel ---------- */
+  .head { grid-area: head; padding-top: 6px; }
+  .mark {
+    margin: 0;
+    font: 400 clamp(24px, 2.6vw, 32px)/1 Michroma, Eurostile, "Arial Black", sans-serif;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+  .mark span { color: var(--accent); }
+  .tag { margin: 12px 0 0; max-width: 36ch; color: var(--muted); text-wrap: pretty; }
+
+  .panel {
+    grid-area: panel;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 22px 4px 4px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .label {
+    display: block;
+    padding: 0;
+    margin: 0 0 10px;
+    font: 500 10.5px/1 "Martian Mono", ui-monospace, Menlo, monospace;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .readout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding-block: 14px 12px;
+    border-block: 1px solid var(--line);
+  }
+  .readout .label { margin: 0 0 8px; }
+  .readout b {
+    font: 500 28px/1 "Martian Mono", ui-monospace, Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.03em;
+  }
+  .status { margin: -8px 0 0; min-height: 1.5em; font-weight: 600; }
+  .note { margin: 10px 0 0; max-width: 40ch; color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+
+  fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+  .keys { display: flex; flex-wrap: wrap; gap: 7px; }
+  .key { position: relative; display: inline-flex; }
+  .key input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+  .key span, button.key {
+    box-sizing: border-box;
+    min-width: 46px;
+    padding: 10px 10px 9px;
+    border: 1px solid var(--key-edge);
+    border-radius: 7px;
+    background: linear-gradient(var(--key), color-mix(in srgb, var(--key), var(--key-edge) 22%));
+    box-shadow: inset 0 1px 0 var(--key-hi), 0 3px 0 var(--key-edge);
+    color: var(--ink);
+    font: 600 13px/1 Archivo, "Helvetica Neue", Arial, sans-serif;
+    font-stretch: 106%;
+    letter-spacing: .02em;
+    text-align: center;
+    cursor: pointer;
+    transition: transform .08s, box-shadow .08s;
+  }
+  .key:active span, button.key:active {
+    transform: translateY(2px);
+    box-shadow: inset 0 1px 0 var(--key-hi), 0 1px 0 var(--key-edge);
+  }
+  /* A chosen option latches down, like a preset button. */
+  .key input:checked + span {
+    transform: translateY(3px);
+    border-color: var(--latch);
+    background: var(--latch);
+    box-shadow: inset 0 2px 4px rgb(0 0 0 / .45);
+    color: var(--latch-ink);
+  }
+  .key input:focus-visible + span, button.key:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  button.key.go {
+    border-color: var(--cobalt-lo);
+    background: linear-gradient(#3a62d6, var(--cobalt));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .25), 0 3px 0 var(--cobalt-lo);
+    color: #fff;
+  }
+  button.key.go:active { box-shadow: inset 0 1px 0 rgb(255 255 255 / .25), 0 1px 0 var(--cobalt-lo); }
+
+  .rules ol, .guide ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .rules ol { counter-reset: rule; }
+  .rules li { counter-increment: rule; display: grid; grid-template-columns: 24px 1fr; line-height: 1.45; }
+  .rules li::before { content: counter(rule); font: 500 12px/1.7 "Martian Mono", ui-monospace, Menlo, monospace; color: var(--accent); }
+  .guide li { display: grid; grid-template-columns: 24px 1fr; align-items: center; font-size: 14px; line-height: 1.4; }
+  .swatch { width: 14px; height: 14px; border-radius: 50%; }
+  .swatch.clue { background: radial-gradient(circle at 50% 35%, #f5f0e6, #ddd3c0); box-shadow: 0 0 0 2px var(--slab), 0 0 0 3px #6a6761; }
+  .swatch.ok { background: var(--ok); box-shadow: 0 0 8px rgb(79 212 135 / .8); }
+  .swatch.bad { background: var(--bad); box-shadow: 0 0 8px rgb(255 75 62 / .8); }
+
+  /* ---------- the board ---------- */
+  .stage {
+    grid-area: stage;
+    container-type: size;
+    min-height: 0;
+    display: grid;
+    place-items: center;
+    perspective: 190vmin;
+    perspective-origin: 50% 42%;
+  }
+  .board {
+    --rx: 26deg;
+    --ry: -4deg;
+    --fit: .84;
+    --cell: calc(min(100cqw, 100cqh * 1.04) * var(--fit) / (var(--n) + 1.5));
+    --pad: calc(var(--cell) * .45);
+    --deep: calc(var(--cell) * .42);
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--n), var(--cell)) calc(var(--cell) * .6);
+    grid-template-rows: repeat(var(--n), var(--cell)) calc(var(--cell) * .6);
+    padding: calc(var(--pad) * 2) var(--pad) var(--pad);
+    border-radius: calc(var(--cell) * .3);
+    background:
+      radial-gradient(90% 70% at 16% 0%, rgb(255 255 255 / .1), transparent 62%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+      linear-gradient(172deg, var(--slab-hi), var(--slab) 38%, var(--slab-lo));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .16), inset 0 -1px 0 rgb(0 0 0 / .5);
+    transform-style: preserve-3d;
+    transform: rotateX(calc(var(--rx) + var(--dy, 0deg))) rotateY(calc(var(--ry) + var(--dx, 0deg)));
+    transition: transform .9s cubic-bezier(.2, .7, .2, 1);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+  }
+  /* Stacked plies under the top plate give the slab its thickness; the deepest casts the shadow. */
+  .ply {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--slab-lo), #000 calc(var(--k) * 45%));
+    transform: translateZ(calc(var(--deep) * var(--k) * -1));
+    pointer-events: none;
+  }
+  .ply:first-child { box-shadow: 0 calc(var(--cell) * .7) calc(var(--cell) * 1.3) var(--cast); }
+  .plate {
+    position: absolute;
+    inset: calc(var(--pad) * .75) var(--pad) auto;
+    display: flex;
+    justify-content: space-between;
+    font: 400 max(7px, calc(var(--cell) * .16))/1 Michroma, Eurostile, sans-serif;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: #111214;
+    text-shadow: 0 1px 0 rgb(255 255 255 / .13);
+    pointer-events: none;
+  }
+
+  .cell {
+    --glow: 0 0 0 0 transparent;
+    position: relative;
+    transform-style: preserve-3d;
+    cursor: pointer;
+    outline: none;
+  }
+  .cell::before { /* the socket */
+    content: "";
+    position: absolute;
+    inset: 7%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 28%, #050506, var(--well) 60%, #1f2124);
+    box-shadow: inset 0 calc(var(--cell) * .06) calc(var(--cell) * .08) rgb(0 0 0 / .85), 0 1px 0 rgb(255 255 255 / .09), var(--glow);
+    transition: box-shadow .25s;
+  }
+  .cell::after { /* a raised coin's shadow */
+    content: "";
+    position: absolute;
+    inset: 12%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(0 0 0 / .75), transparent);
+    transform: translate(7%, 12%);
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .cell:not(.given):not([data-v="-1"])::after { opacity: 1; }
+  .cell:focus-visible::before { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .given { --glow: 0 0 0 calc(var(--cell) * .03) #5f5d59; cursor: default; }
+  .cell.trio { --glow: 0 0 0 calc(var(--cell) * .045) var(--bad), 0 0 calc(var(--cell) * .4) rgb(255 75 62 / .6); }
+  @media (hover: hover) {
+    .cell:not(.given):hover .hop { transform: translateZ(calc(var(--cell) * .12)); }
+    .cell[data-v="-1"]:not(.given):hover { --glow: 0 0 0 1px rgb(255 255 255 / .22); }
+  }
+
+  .hop, .coin, .coin > i {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    transform-style: preserve-3d;
+  }
+  /* Coins are hit-transparent: raised and invisible empty ones would otherwise catch taps meant for the cell above. */
+  .hop { inset: 11%; transition: transform .25s ease; pointer-events: none; }
+  .coin {
+    --t: calc(var(--cell) * .085); /* half the coin's thickness */
+    --rest: calc(var(--t) + 1px);
+    transform: translateZ(var(--rest)) rotateX(0deg);
+    transition: transform .5s cubic-bezier(.3, 1.2, .5, 1);
+  }
+  [data-v="1"] .coin { transform: translateZ(var(--rest)) rotateX(180deg); }
+  [data-v="-1"] .coin { transform: translateZ(calc(var(--cell) * 1.4)) rotateX(0deg); }
+  .coin > i { font-style: normal; transition: opacity .3s; }
+  [data-v="-1"] .coin > i { opacity: 0; }
+  .rim { background: var(--edge); }
+  .rim:nth-child(1) { transform: translateZ(calc(var(--t) - .5px)); }
+  .rim:nth-child(3) { transform: translateZ(calc(.5px - var(--t))); }
+  .face {
+    display: grid;
+    place-items: center;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    font: 400 max(8px, calc(var(--cell) * .31))/1 Michroma, Eurostile, sans-serif;
+  }
+  .face.a {
+    transform: translateZ(var(--t));
+    background: radial-gradient(circle at 34% 28%, #fffdf8, var(--bone) 40%, var(--bone-lo));
+    box-shadow: inset 0 0 0 calc(var(--cell) * .04) rgb(255 255 255 / .35), inset 0 calc(var(--cell) * -.05) calc(var(--cell) * .1) rgb(90 70 40 / .25);
+    color: var(--bone-ink);
+  }
+  .face.b {
+    transform: rotateX(180deg) translateZ(var(--t));
+    background: radial-gradient(circle at 34% 28%, var(--cobalt-hi), var(--cobalt) 42%, var(--cobalt-lo));
+    box-shadow: inset 0 0 0 calc(var(--cell) * .04) rgb(255 255 255 / .16), inset 0 calc(var(--cell) * -.05) calc(var(--cell) * .1) rgb(0 10 50 / .35);
+    color: var(--cobalt-ink);
+  }
+  /* Clues are inlaid flush and matte in a steel-ringed socket, digits engraved. */
+  .given .coin { --rest: calc(1px - var(--t)); transition: none; }
+  .given .face.a {
+    background: radial-gradient(circle at 50% 35%, #f5f0e6, #ddd3c0);
+    box-shadow: inset 0 0 0 calc(var(--cell) * .055) rgb(0 0 0 / .1), inset 0 calc(var(--cell) * .02) calc(var(--cell) * .04) rgb(0 0 0 / .18);
+    color: #857862;
+    text-shadow: 0 1px 0 rgb(255 255 255 / .7);
+  }
+  .given .face.b {
+    background: radial-gradient(circle at 50% 35%, #3a61d2, #2646a6);
+    box-shadow: inset 0 0 0 calc(var(--cell) * .055) rgb(0 0 0 / .16), inset 0 calc(var(--cell) * .02) calc(var(--cell) * .04) rgb(0 0 0 / .3);
+    color: #b9c8ff;
+    text-shadow: 0 -1px 0 rgb(0 0 0 / .35);
+  }
+
+  /* Line lamps: green when a row or column is full and legal, red while it breaks a rule. */
+  .lamp {
+    place-self: center;
+    width: calc(var(--cell) * .2);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #4b4e54, #101113 70%);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / .9), 0 1px 0 rgb(255 255 255 / .1);
+    transform: translateZ(1px);
+    transition: background .35s, box-shadow .35s;
+    pointer-events: none;
+  }
+  .lamp.main { width: calc(var(--cell) * .3); }
+  .lamp[data-s="ok"] {
+    background: radial-gradient(circle at 38% 32%, #eafff2, var(--ok) 48%, #167a3f);
+    box-shadow: 0 0 calc(var(--cell) * .3) rgb(79 212 135 / .7);
+  }
+  .lamp[data-s="bad"] {
+    background: radial-gradient(circle at 38% 32%, #ffe4e0, var(--bad) 48%, #9a1409);
+    box-shadow: 0 0 calc(var(--cell) * .35) rgb(255 75 62 / .85);
+    animation: throb 1s ease-in-out infinite alternate;
+  }
+  @keyframes throb { to { box-shadow: 0 0 calc(var(--cell) * .1) rgb(255 75 62 / .45); } }
+
+  @media (max-width: 820px) {
+    .app {
+      height: auto;
+      padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+      padding-block: 18px max(36px, env(safe-area-inset-bottom));
+      grid-template: "head" "stage" "panel" / minmax(0, 1fr);
+      row-gap: 4px;
+    }
+    .stage { aspect-ratio: 1 / .96; max-height: 100vh; max-height: 100dvh; }
+    .board { --rx: 20deg; --ry: 0deg; --fit: .9; }
+    .panel { overflow: visible; padding-top: 8px; }
+  }
+  /* Short landscape phones: give the board the height the padding was eating. */
+  @media (min-width: 821px) and (max-height: 500px) {
+    .app { padding-block: 12px; }
+  }
+  @media (pointer: coarse) {
+    .key span, button.key { padding-block: 15px 14px; }
+    .label { font-size: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .board, .hop, .coin, .coin > i, .cell::after, .lamp { transition: none; }
+    .lamp[data-s="bad"] { animation: none; }
+  }
+</style>
+
+<div class="app">
+  <header class="head">
+    <h1 class="mark">Bit<span>flip</span></h1>
+    <p class="tag">The binary puzzle, also known as Takuzu or Binairo. Fill every socket with a 0 or a 1.</p>
+  </header>
+
+  <main class="stage" id="stage">
+    <div class="board" id="board" role="group" aria-describedby="how"></div>
+  </main>
+
+  <aside class="panel" aria-label="Game">
+    <div class="readout">
+      <div><span class="label">Time</span><b id="time">00:00</b></div>
+      <div><span class="label">Filled</span><b id="filled">0/64</b></div>
+    </div>
+    <p class="status" id="msg" role="status"></p>
+
+    <fieldset>
+      <legend class="label">Grid</legend>
+      <div class="keys">
+        <label class="key"><input type="radio" name="size" value="6" id="size-6"><span>6×6</span></label>
+        <label class="key"><input type="radio" name="size" value="8" id="size-8"><span>8×8</span></label>
+        <label class="key"><input type="radio" name="size" value="10" id="size-10"><span>10×10</span></label>
+        <label class="key"><input type="radio" name="size" value="12" id="size-12"><span>12×12</span></label>
+        <label class="key"><input type="radio" name="size" value="14" id="size-14"><span>14×14</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend class="label">Level</legend>
+      <div class="keys">
+        <label class="key"><input type="radio" name="level" value="easy" id="level-easy"><span>Easy</span></label>
+        <label class="key"><input type="radio" name="level" value="hard" id="level-hard"><span>Hard</span></label>
+      </div>
+      <p class="note" id="level-note"></p>
+    </fieldset>
+
+    <div class="keys">
+      <button class="key go" id="new" type="button">New puzzle</button>
+      <button class="key" id="restart" type="button">Restart</button>
+    </div>
+
+    <section class="rules" aria-labelledby="rules-title">
+      <h2 class="label" id="rules-title">Rules</h2>
+      <ol>
+        <li>Each cell holds a 0 or a 1.</li>
+        <li>No more than two equal digits side by side or stacked: never three in a row.</li>
+        <li>Every row and every column holds as many 0s as 1s.</li>
+        <li>No two rows are the same, and no two columns are the same.</li>
+      </ol>
+      <p class="note">Every puzzle has exactly one solution, and logic alone gets you there.</p>
+    </section>
+
+    <section class="guide" aria-labelledby="guide-title">
+      <h2 class="label" id="guide-title">Reading the board</h2>
+      <ul>
+        <li><i class="swatch clue"></i>Low, ringed discs are clues and stay put.</li>
+        <li><i class="swatch ok"></i>Green lamp: that row or column is full and legal.</li>
+        <li><i class="swatch bad"></i>Red lamp: that line breaks a rule.</li>
+      </ul>
+      <p class="note" id="how">Click or tap a socket to cycle 0, 1, empty; right-click or long-press steps back. Keyboard: arrow keys move, 0 or 1 places, Backspace clears.</p>
+    </section>
+  </aside>
+</div>
+
+<script src="puzzle.js"></script>
+<script>
+  const $ = s => document.querySelector(s)
+  const board = $('#board'), stage = $('#stage'), time = $('#time'), filled = $('#filled'), msg = $('#msg')
+  const still = matchMedia('(prefers-reduced-motion: reduce)')
+  const SAVE = 'bitflip:v1'
+  const NEXT = { '-1': 0, 0: 1, 1: -1 }, BACK = { '-1': 1, 1: 0, 0: -1 }
+  const NOTES = {
+    easy: 'Every step follows from spotting pairs or finishing a count.',
+    hard: 'Some steps need counting across a whole line, or rule 4.',
+  }
+  let S, cells = [], lamps = [], main, cursor = 0
+
+  const clock = s => `${String(s / 60 | 0).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+  const diagonal = i => (i / S.n | 0) + i % S.n
+  const save = () => { try { localStorage.setItem(SAVE, JSON.stringify(S)) } catch {} }
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(SAVE))
+      if ([6, 8, 10, 12, 14].includes(s.n) && s.givens.length === s.n ** 2 && s.grid.length === s.n ** 2) return s
+    } catch {}
+  }
+
+  function deal(n = S.n, hard = S.hard) {
+    const { givens } = Binary.generate(n, hard)
+    S = { n, hard, givens, grid: givens.slice(), elapsed: 0, solved: false }
+    build()
+    save()
+  }
+
+  function build() {
+    const { n, hard, givens, grid } = S
+    board.style.setProperty('--n', n)
+    board.setAttribute('aria-label', `${n} by ${n} ${hard ? 'hard' : 'easy'} puzzle`)
+    board.innerHTML = [1, .8, .6, .4, .2].map(k => `<i class="ply" style="--k:${k}"></i>`).join('') +
+      `<div class="plate" aria-hidden="true"><span>Bitflip</span><span>${n}×${n} ${hard ? 'hard' : 'easy'}</span></div>`
+    cells = []
+    lamps = []
+    // Row-major with a lamp closing each row, then a row of column lamps and the master lamp.
+    for (let r = 0; r <= n; r++) for (let c = 0; c <= n; c++) {
+      if (r < n && c < n) {
+        const i = r * n + c, el = document.createElement('div')
+        el.className = givens[i] >= 0 ? 'cell given' : 'cell'
+        el.dataset.i = i
+        el.dataset.v = grid[i]
+        el.setAttribute('role', 'button')
+        if (givens[i] >= 0) el.setAttribute('aria-disabled', 'true')
+        el.tabIndex = i ? -1 : 0
+        el.innerHTML = '<div class="hop"><div class="coin"><i class="rim"></i><i class="rim"></i><i class="rim"></i><i class="face a">0</i><i class="face b">1</i></div></div>'
+        board.append(el)
+        cells.push(el)
+      } else {
+        const el = document.createElement('i')
+        el.className = 'lamp'
+        board.append(el)
+        if (r < n) lamps[r] = el
+        else if (c < n) lamps[n + c] = el
+        else { el.classList.add('main'); main = el }
+      }
+    }
+    cursor = 0
+    $(`#size-${n}`).checked = true
+    $(`#level-${hard ? 'hard' : 'easy'}`).checked = true
+    $('#level-note').textContent = NOTES[hard ? 'hard' : 'easy']
+    refresh()
+    if (still.matches) return
+    // Deal-in: every coin drops onto the board in a diagonal wave.
+    const h = cells[0].offsetWidth * 1.6
+    cells.forEach((el, i) => grid[i] >= 0 && el.firstChild.animate([
+      { transform: `translateZ(${h}px)`, easing: 'cubic-bezier(.5, 0, .9, .5)' },
+      { transform: 'translateZ(0)', offset: .62, easing: 'cubic-bezier(.1, .5, .5, 1)' },
+      { transform: `translateZ(${h * .07}px)`, offset: .8, easing: 'cubic-bezier(.5, 0, .9, .5)' },
+      { transform: 'translateZ(0)' },
+    ], { duration: 600, delay: diagonal(i) * 28, fill: 'backwards' }))
+  }
+
+  function refresh() {
+    const { n, grid, givens } = S, a = Binary.audit(grid, n)
+    cells.forEach((el, i) => {
+      const trio = a.trio.has(i), v = grid[i]
+      el.classList.toggle('trio', trio)
+      el.setAttribute('aria-label', `Row ${(i / n | 0) + 1}, column ${i % n + 1}: ${v < 0 ? 'empty' : v}${givens[i] >= 0 ? ', clue' : ''}${trio ? ', three in a row' : ''}`)
+    })
+    lamps.forEach((el, l) => { el.dataset.s = a.state[l] })
+    if (a.solved && !S.solved) { S.solved = true; celebrate() }
+    main.dataset.s = S.solved ? 'ok' : ''
+    filled.textContent = `${grid.filter(v => v >= 0).length}/${n * n}`
+    time.textContent = clock(S.elapsed)
+    const text = S.solved ? `Solved in ${clock(S.elapsed)}.` : a.state.includes('bad') ? 'A rule is broken: follow the red lamp.' : ''
+    if (msg.textContent !== text) msg.textContent = text
+  }
+
+  function set(i, v) {
+    const el = cells[i]
+    if (S.givens[i] >= 0) return wiggle(el)
+    if (S.solved || S.grid[i] === v) return
+    const was = S.grid[i]
+    S.grid[i] = v
+    el.dataset.v = v
+    // 0 <-> 1 is a flip: toss the coin up while CSS turns it over.
+    if (was >= 0 && v >= 0 && !still.matches) {
+      el.firstChild.animate([
+        { transform: 'translateZ(0)' },
+        { transform: `translateZ(${el.offsetWidth * .6}px)`, offset: .4 },
+        { transform: 'translateZ(0)' },
+      ], { duration: 480, easing: 'cubic-bezier(.3, .6, .4, 1)' })
+    }
+    refresh()
+    save()
+  }
+  const cycle = (i, dir) => set(i, (dir > 0 ? NEXT : BACK)[S.grid[i]])
+
+  function wiggle(el) {
+    if (still.matches) return
+    el.firstChild.animate([
+      { transform: 'rotateZ(0deg)' }, { transform: 'rotateZ(-14deg)' }, { transform: 'rotateZ(10deg)' }, { transform: 'rotateZ(0deg)' },
+    ], 280)
+  }
+
+  function celebrate() {
+    if (still.matches) return
+    const h = cells[0].offsetWidth
+    cells.forEach((el, i) => el.firstChild.animate([
+      { transform: 'translateZ(0) rotateX(0deg)' },
+      { transform: `translateZ(${h}px) rotateX(180deg)` },
+      { transform: 'translateZ(0) rotateX(360deg)' },
+    ], { duration: 800, delay: 250 + diagonal(i) * 45, easing: 'cubic-bezier(.35, .1, .3, 1)' }))
+  }
+
+  function aim(i, focus = true) {
+    cells[cursor].tabIndex = -1
+    cursor = i
+    cells[i].tabIndex = 0
+    if (focus) cells[i].focus({ preventScroll: true })
+  }
+
+  // Long-press is right-click for touch: iOS never fires contextmenu, Android does, so whichever comes first wins.
+  let press, pressed = false
+  const back = el => {
+    clearTimeout(press)
+    if (pressed) return
+    pressed = true
+    aim(+el.dataset.i, false)
+    cycle(+el.dataset.i, -1)
+  }
+  board.addEventListener('pointerdown', e => {
+    pressed = false
+    const el = e.target.closest('.cell')
+    if (el && e.pointerType !== 'mouse') press = setTimeout(back, 450, el)
+  })
+  board.addEventListener('pointerup', () => clearTimeout(press))
+  board.addEventListener('pointercancel', () => clearTimeout(press))
+  board.addEventListener('click', e => {
+    const el = e.target.closest('.cell')
+    if (!el || pressed) return
+    aim(+el.dataset.i, false)
+    cycle(+el.dataset.i, 1)
+  })
+  board.addEventListener('contextmenu', e => {
+    const el = e.target.closest('.cell')
+    if (!el) return
+    e.preventDefault()
+    back(el)
+  })
+  board.addEventListener('keydown', e => {
+    const el = e.target.closest('.cell')
+    if (!el || e.metaKey || e.ctrlKey || e.altKey) return
+    const n = S.n, i = +el.dataset.i, r = i / n | 0, c = i % n
+    const clamp = x => Math.max(0, Math.min(n - 1, x))
+    const move = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[e.key]
+    if (move) aim(clamp(r + move[0]) * n + clamp(c + move[1]))
+    else if (e.key === '0' || e.key === '1') set(i, +e.key)
+    else if (e.key === 'Backspace' || e.key === 'Delete') set(i, -1)
+    else if (e.key === ' ' || e.key === 'Enter') cycle(i, 1)
+    else return
+    e.preventDefault()
+  })
+
+  document.querySelectorAll('input[name="size"]').forEach(r => r.addEventListener('change', () => deal(+r.value, S.hard)))
+  document.querySelectorAll('input[name="level"]').forEach(r => r.addEventListener('change', () => deal(S.n, r.value === 'hard')))
+  $('#new').addEventListener('click', () => deal())
+  $('#restart').addEventListener('click', () => {
+    Object.assign(S, { grid: S.givens.slice(), elapsed: 0, solved: false })
+    build()
+    save()
+  })
+
+  // The board leans away from the pointer, on devices that have one.
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches && !still.matches) {
+    stage.addEventListener('pointermove', e => {
+      const r = stage.getBoundingClientRect()
+      board.style.setProperty('--dx', `${((e.clientX - r.left) / r.width - .5) * 10}deg`)
+      board.style.setProperty('--dy', `${((e.clientY - r.top) / r.height - .5) * -8}deg`)
+    })
+    stage.addEventListener('pointerleave', () => {
+      board.style.removeProperty('--dx')
+      board.style.removeProperty('--dy')
+    })
+  }
+
+  setInterval(() => {
+    if (!S || S.solved || document.hidden) return
+    time.textContent = clock(++S.elapsed)
+    if (S.elapsed % 5 === 0) save()
+  }, 1000)
+
+  function start(data) {
+    const saved = data?.S ?? load()
+    if (saved) { S = saved; build() } else deal(8, false)
+  }
+  window.claude?.hot?.snapshot?.(() => ({ S }))
+  window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data)
+</script>

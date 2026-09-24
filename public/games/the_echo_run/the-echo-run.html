@@ -1,0 +1,1218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Echo Run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=JetBrains+Mono:wght@400;600;800&display=swap">
+<style>
+/* ponytail: single deliberate dark look (a lantern-lit dungeon), no light theme */
+:root{
+  color-scheme: dark;
+  --ink:#0b0d12; --ink2:#11141c; --panel:#161a25; --line:#272d3e;
+  --bone:#ddd6c3; --dim:#8b8676; --lantern:#e8b04a; --ghost:#8fd3e0;
+  --blood:#cf5a4e; --moss:#86b77a; --violet:#b39ddb;
+  --display:"IM Fell English", "Iowan Old Style", Georgia, serif;
+  --mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--ink);color:var(--bone);font:14px/1.5 var(--mono);padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));margin:0}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:2px solid var(--lantern);outline-offset:2px}
+#app{max-width:1080px;margin:0 auto;padding-block:14px calc(28px + env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px}
+.brand{font:400 22px/1 var(--display);letter-spacing:.02em}
+.brand i{color:var(--ghost)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);padding:3px 9px;font-size:12px;color:var(--dim);white-space:nowrap}
+.chip b{color:var(--bone);font-weight:600}
+.chip.lan b{color:var(--lantern)}
+.chip.net-on{border-color:color-mix(in srgb,var(--ghost) 50%,var(--line));color:var(--ghost)}
+h1,h2,h3{font-family:var(--display);font-weight:400;text-wrap:balance;margin:0}
+h1{font-size:clamp(40px,9vw,76px);line-height:.95;letter-spacing:-.01em}
+h2{font-size:24px}
+h3{font-size:18px}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+p{margin:0;max-width:65ch}
+.lede{font:italic 400 19px/1.45 var(--display);color:var(--dim);max-width:52ch}
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:24px;align-items:end;padding-block:18px 6px}
+.hero canvas{width:100%;height:auto;aspect-ratio:3/2;max-width:100%;display:block;border:1px solid var(--line);background:var(--ink2)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);padding:16px;display:grid;gap:12px;align-content:start;min-width:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{background:transparent;border:1px solid var(--line);padding:8px 14px;color:var(--bone)}
+.btn:hover{border-color:var(--dim)}
+.btn.go{background:var(--lantern);color:#1b1406;border-color:var(--lantern);font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.btn.go:hover{filter:brightness(1.08)}
+.btn.ghost{border-color:color-mix(in srgb,var(--ghost) 55%,transparent);color:var(--ghost)}
+.btn.red{border-color:color-mix(in srgb,var(--blood) 60%,transparent);color:var(--blood)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+input[type=text]{background:var(--ink2);border:1px solid var(--line);padding:8px 10px;min-width:0;width:100%}
+label{font-size:12px;color:var(--dim)}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.opt{border:1px solid var(--line);background:var(--ink2);padding:10px;text-align:left;display:grid;gap:4px;align-content:start}
+.opt[aria-pressed=true]{border-color:var(--lantern);box-shadow:inset 0 0 0 1px var(--lantern)}
+.opt .n{font-weight:600}
+.opt small{color:var(--dim);font-size:11px;line-height:1.4}
+.fx{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.fx .opt{grid-template-columns:auto 1fr;align-items:center;column-gap:10px}
+.sw{width:22px;height:22px;border-radius:50%;box-shadow:0 0 12px currentColor;background:currentColor;opacity:.85}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:6px 10px;color:var(--dim)}
+.tabs button[aria-selected=true]{color:var(--bone);border-bottom-color:var(--lantern)}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+.tbl td,.tbl th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{color:var(--dim);font-weight:400;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.tbl td.num{text-align:right;color:var(--lantern)}
+.scroll{overflow-x:auto}
+.inbox{display:grid;gap:6px;max-height:220px;overflow:auto}
+.note{border-left:2px solid var(--ghost);padding:4px 10px;font-size:12px;background:color-mix(in srgb,var(--ghost) 6%,transparent)}
+.note.gold{border-left-color:var(--lantern)}
+.note.red{border-left-color:var(--blood)}
+.muted{color:var(--dim)}
+.small{font-size:12px}
+/* run screen */
+.run{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
+.hud{display:flex;gap:10px 16px;flex-wrap:wrap;align-items:center;font-size:12px}
+.hpbar{flex:1 1 160px;height:12px;background:var(--ink2);border:1px solid var(--line);position:relative}
+.hpbar i{position:absolute;inset:0 auto 0 0;background:var(--blood);transition:width .2s}
+.hpbar span{position:absolute;inset:-2px 0 0;text-align:center;font-size:10px;font-weight:800;color:var(--bone);text-shadow:0 1px 2px #000}
+.play{display:grid;gap:10px;min-width:0}
+.stage{position:relative}
+.stage,.pad{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#cv{width:100%;height:auto;aspect-ratio:11/9;display:block;border:1px solid var(--line);background:var(--ink2);touch-action:none;max-width:100%}
+.pad{display:none;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,44px);gap:6px;justify-content:center}
+.pad button{background:var(--panel);border:1px solid var(--line);font-size:18px}
+.side{display:grid;gap:14px}
+.relics{display:flex;flex-wrap:wrap;gap:6px}
+.relic{border:1px solid var(--line);padding:3px 7px;font-size:12px;cursor:help;background:var(--ink2)}
+.relic.echo{border-color:color-mix(in srgb,var(--ghost) 60%,transparent);color:var(--ghost)}
+.relic.rare{color:var(--violet)}
+.relic.legend{color:var(--lantern)}
+.log{font-size:12px;display:grid;gap:3px;max-height:260px;overflow:auto;color:var(--dim)}
+.log div:first-child{color:var(--bone)}
+.keys{font-size:11px;color:var(--dim)}
+kbd{border:1px solid var(--line);padding:0 4px;font-family:var(--mono);font-size:10px}
+/* modal */
+.modal{position:fixed;inset:0;background:color-mix(in srgb,var(--ink) 82%,transparent);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));z-index:10;backdrop-filter:blur(2px)}
+.card{background:var(--panel);border:1px solid var(--line);max-width:620px;width:100%;padding:22px;display:grid;gap:14px;max-height:calc(100% - 32px);overflow:auto}
+.card .lede{font-size:17px}
+.choices{display:grid;gap:8px}
+.choice{text-align:left;background:var(--ink2);border:1px solid var(--line);padding:12px;display:grid;gap:3px}
+.choice:hover{border-color:var(--lantern)}
+.choice .n{font-weight:600}
+.choice small{color:var(--dim)}
+.echo-card{border:1px solid color-mix(in srgb,var(--ghost) 40%,var(--line));padding:12px;display:grid;gap:6px;background:color-mix(in srgb,var(--ghost) 5%,var(--ink2))}
+.story{font:400 18px/1.6 var(--display)}
+.story em{color:var(--ghost)}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top, 0px) + 12px);transform:translateX(-50%);pointer-events:none;display:grid;gap:4px;justify-items:center;width:min(560px,calc(100% - 32px));z-index:20}
+#toast div{background:var(--panel);border:1px solid var(--line);padding:4px 10px;font-size:12px;animation:fade 2.4s forwards}
+@keyframes fade{0%,70%{opacity:1}100%{opacity:0}}
+.foot{font-size:11px;color:var(--dim);border-top:1px solid var(--line);padding-top:10px}
+@media (max-width:820px){
+  .hero,.grid2,.run{grid-template-columns:minmax(0,1fr)}
+  .opts{grid-template-columns:1fr}
+}
+/* pad under the room: shrink the room so bar + hud + room + pad fit one screen */
+@media (max-width:820px),(pointer:coarse){
+  .pad{display:grid}
+  #cv{width:min(100%,(100vh - 330px) * 11 / 9);width:min(100%,(100dvh - 330px) * 11 / 9);margin-inline:auto}
+}
+@media (pointer:coarse){
+  .pad{grid-template-columns:repeat(3,64px);grid-template-rows:repeat(3,52px)}
+  .btn,.tabs button{min-height:44px}
+  .relic{position:relative}
+  .relic::after{content:"";position:absolute;inset:-10px 0} /* 44px hit area, same look */
+  input[type=text]{font-size:16px}
+  .eyebrow,.opt small,.tbl th,.keys,.foot,kbd,.hpbar span{font-size:12px}
+  .hpbar{height:16px}
+}
+/* phone landscape: room on the left at full height, hud + pad + side stacked on the right */
+@media (orientation:landscape) and (max-height:540px){
+  #app{padding-block:8px calc(8px + env(safe-area-inset-bottom))}
+  #app:has(#scr-run:not([hidden])) .bar{display:none}
+  .run{grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto 1fr;gap:10px 14px}
+  .play{display:contents}
+  .stage{grid-row:1/4}
+  .hud,.pad,.side{grid-column:2}
+  #cv{width:min(60vw,(100vh - 18px) * 11 / 9);width:min(60vw,(100dvh - 18px) * 11 / 9)}
+}
+@media (prefers-reduced-motion:reduce){#toast div{animation:none}.hpbar i{transition:none}}
+</style>
+
+<div id="app">
+  <div class="bar">
+    <div class="brand">The <i>Echo</i> Run</div>
+    <div class="chips">
+      <span class="chip lan">Shards <b id="c-shards">0</b></span>
+      <span class="chip">Week <b id="c-week">—</b></span>
+      <span class="chip" id="c-net" title="Where echoes come from">Offline loop</span>
+    </div>
+  </div>
+
+  <section id="scr-title" class="screen">
+    <div class="hero">
+      <div style="display:grid;gap:14px">
+        <div class="eyebrow">Event · The Long Echo</div>
+        <h1>Every fall<br>leaves a ghost.</h1>
+        <p class="lede">The dungeon is a loop, and it remembers everyone who died in it. Meet their echoes. Fight one for its relic, or recruit it for three rooms. When you fall, your echo waits for the next adventurer.</p>
+      </div>
+      <canvas id="hero-cv" width="540" height="360" aria-label="An echo drifting in the dark"></canvas>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <div class="row" style="justify-content:space-between"><h2>Begin a run</h2><span class="muted small" id="best"></span></div>
+        <div style="display:grid;gap:6px">
+          <label for="in-name">Adventurer name (others will see it on your echo)</label>
+          <input type="text" id="in-name" maxlength="18" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="opts" id="origins" role="group" aria-label="Origin"></div>
+        <div style="display:grid;gap:6px">
+          <div class="row" style="justify-content:space-between"><label>Echo effect: how your ghost looks to others</label></div>
+          <div class="fx" id="fx"></div>
+        </div>
+        <button class="btn go" id="btn-start">Enter the loop</button>
+        <p class="keys">Move <kbd>WASD</kbd>/<kbd>arrows</kbd> · bump to attack · wait <kbd>Space</kbd> · or tap a tile / the arrow pad (tap yourself or <kbd>·</kbd> to wait) · tap a relic to read it</p>
+      </div>
+
+      <div class="panel">
+        <div class="row" style="justify-content:space-between"><h2>Your echoes</h2><span class="muted small" id="cap-note"></span></div>
+        <div class="inbox" id="inbox"></div>
+        <div id="my-echoes" class="small muted"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-tab="rec">Most recruited · this week</button>
+        <button role="tab" aria-selected="false" data-tab="def">Most defeated · this week</button>
+        <button role="tab" aria-selected="false" data-tab="hof">Hall of fame</button>
+        <button role="tab" aria-selected="false" data-tab="codex">Echo relic codex</button>
+      </div>
+      <div class="scroll" id="board"></div>
+    </div>
+    <p class="foot" id="foot"></p>
+  </section>
+
+  <section id="scr-run" class="screen" hidden>
+    <div class="run">
+      <div class="play">
+        <div class="hud">
+          <span id="h-where" class="eyebrow"></span>
+          <div class="hpbar"><i id="h-hpfill"></i><span id="h-hp"></span></div>
+          <span>ATK <b id="h-atk"></b></span><span>DEF <b id="h-def"></b></span>
+          <span id="h-ally" class="muted"></span>
+        </div>
+        <div class="stage"><canvas id="cv" width="660" height="540" aria-label="Dungeon room"></canvas></div>
+        <div class="pad" aria-label="Touch controls">
+          <span></span><button data-d="0,-1" aria-label="Up">↑</button><span></span>
+          <button data-d="-1,0" aria-label="Left">←</button><button data-d="0,0" aria-label="Wait">·</button><button data-d="1,0" aria-label="Right">→</button>
+          <span></span><button data-d="0,1" aria-label="Down">↓</button><span></span>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="panel"><div class="eyebrow">Relics</div><div class="relics" id="relics"></div></div>
+        <div class="panel"><div class="eyebrow">Chronicle</div><div class="log" id="log"></div></div>
+        <button class="btn red" id="btn-abandon">Give up the run</button>
+      </aside>
+    </div>
+  </section>
+
+  <div id="toast" aria-live="polite"></div>
+  <div id="modal" class="modal" hidden><div class="card" id="modal-body" role="dialog" aria-modal="true"></div></div>
+</div>
+<script>
+"use strict";
+window.__errs = [];
+addEventListener('error', e => __errs.push(String(e.message)));
+addEventListener('unhandledrejection', e => __errs.push('rejection: ' + (e.reason?.message || e.reason)));
+/* ============ utils ============ */
+const $ = s => document.querySelector(s);
+const TAU = Math.PI * 2;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'on') for (const [ev, fn] of Object.entries(v)) el.addEventListener(ev, fn);
+    else if (k === 'style') el.style.cssText = v;
+    else if (v !== false && v != null) el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) el.append(c instanceof Node ? c : String(c));
+  return el;
+}
+function rng(seed) { // mulberry32
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+const hash = s => { let x = 2166136261; for (const c of String(s)) x = Math.imul(x ^ c.charCodeAt(0), 16777619); return x >>> 0; };
+let R = Math.random;
+const ri = (a, b) => a + Math.floor(R() * (b - a + 1));
+const pick = arr => arr[Math.floor(R() * arr.length)];
+const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; };
+const uid = () => Date.now().toString(36) + Math.floor(Math.random() * 1e9).toString(36);
+const dayKey = (t = Date.now()) => new Date(t).toISOString().slice(0, 10);
+function weekKey(t = Date.now()) { // ISO-8601 week, UTC
+  const d = new Date(t), u = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  u.setUTCDate(u.getUTCDate() + 4 - (u.getUTCDay() || 7));
+  const y = u.getUTCFullYear(), wk = Math.ceil(((u - Date.UTC(y, 0, 1)) / 864e5 + 1) / 7);
+  return y + '-W' + String(wk).padStart(2, '0');
+}
+
+/* ============ rules of the loop ============ */
+const RECRUIT_REWARD = 5;      // shards to the echo's owner per recruit
+const DAILY_RECRUIT_CAP = 5;   // anti-farm: rewarded recruits per owner per UTC day
+const ECHOES_PER_PLAYER = 3;   // anti-flood: only your newest echoes stay in the loop
+const ALLY_ROOMS = 3;
+const MAX_LOG = 300;           // encounter entries kept per player doc
+
+/* ============ data ============ */
+const ORIGINS = {
+  knight: { name: 'Oathsworn', blurb: 'Heavy shield, long patience.', hp: 34, atk: 4, def: 2, relics: ['buckler'], color: '#e8b04a' },
+  rogue:  { name: 'Cutpurse',  blurb: 'Hits first, hits twice as hard.', hp: 26, atk: 5, def: 1, relics: ['dice'], color: '#86b77a' },
+  witch:  { name: 'Hedge-Witch', blurb: 'Drinks what she wounds.', hp: 28, atk: 4, def: 1, relics: ['fang'], color: '#b39ddb' },
+};
+
+// mods: hp atk def crit steal thorns dodge killHeal clearHeal first regen revive allyRooms
+const RELICS = {
+  whetstone: { name: 'Whetstone', r: 'common', m: { atk: 1 }, d: '+1 attack.' },
+  buckler:   { name: 'Dented Buckler', r: 'common', m: { def: 1 }, d: '+1 defense.' },
+  heartroot: { name: 'Heartroot', r: 'common', m: { hp: 6 }, d: '+6 max HP.' },
+  lantern:   { name: 'Cracked Lantern', r: 'common', m: { clearHeal: 3 }, d: 'Heal 3 after each room.' },
+  nettle:    { name: 'Nettle Mail', r: 'common', m: { thorns: 2 }, d: 'Melee attackers take 2 damage.' },
+  dice:      { name: 'Loaded Die', r: 'common', m: { crit: .15 }, d: '15% chance to deal double damage.' },
+  feather:   { name: 'Owl Feather', r: 'common', m: { dodge: .12 }, d: '12% chance to dodge a hit.' },
+  skull:     { name: 'Grinning Skull', r: 'common', m: { killHeal: 3 }, d: 'Heal 3 on each kill.' },
+  fang:      { name: 'Vampire Fang', r: 'rare', m: { steal: 1 }, d: 'Heal 1 on each hit.' },
+  hook:      { name: "Ambusher's Hook", r: 'rare', m: { first: 3 }, d: '+3 damage against unhurt foes.' },
+  ironheart: { name: 'Iron Heart', r: 'rare', m: { hp: 12, def: 1 }, d: '+12 max HP, +1 defense.' },
+  warbrand:  { name: 'War Brand', r: 'rare', m: { atk: 2 }, d: '+2 attack.' },
+  mossring:  { name: 'Moss Ring', r: 'rare', m: { regen: 1 }, d: 'Regenerate 1 HP every 4 turns.' },
+  crown:     { name: 'Crown of Teeth', r: 'legend', m: { atk: 2, crit: .2 }, d: '+2 attack, 20% crit.' },
+  aegis:     { name: 'Aegis Shard', r: 'legend', m: { def: 3 }, d: '+3 defense.' },
+  quill:     { name: 'Phoenix Quill', r: 'legend', m: { revive: 1 }, d: 'Once per run, rise at half HP.' },
+  // echo-only: never in normal loot. Born when someone dies; taken by defeating their echo.
+  pulse:     { name: 'Borrowed Heartbeat', r: 'echo', m: { hp: 10, clearHeal: 2 }, d: '+10 max HP, heal 2 after each room.' },
+  mourning:  { name: 'Mourning Blade', r: 'echo', m: { atk: 3 }, d: '+3 attack. It hums a name you almost know.' },
+  veil:      { name: 'Hollow Veil', r: 'echo', m: { dodge: .25 }, d: '25% chance to dodge a hit.' },
+  grudge:    { name: 'Grudge Knot', r: 'echo', m: { thorns: 4, atk: 1 }, d: 'Melee attackers take 4 damage, +1 attack.' },
+  lostlamp:  { name: 'Lantern of the Lost', r: 'echo', m: { clearHeal: 6 }, d: 'Heal 6 after each room.' },
+  bell:      { name: 'Choir Bell', r: 'echo', m: { allyRooms: 2, atk: 1 }, d: 'Recruited echoes stay 2 extra rooms. +1 attack.' },
+  palehand:  { name: 'The Pale Hand', r: 'echo', m: { steal: 2 }, d: 'Heal 2 on each hit.' },
+  mirror:    { name: 'Mirror-Silver', r: 'echo', m: { first: 4, crit: .15 }, d: '+4 damage against unhurt foes, 15% crit.' },
+};
+const ECHO_RELICS = Object.keys(RELICS).filter(k => RELICS[k].r === 'echo');
+const LOOT = Object.keys(RELICS).filter(k => RELICS[k].r !== 'echo');
+const RANK = { common: 1, rare: 2, legend: 3, echo: 4 };
+
+const COSMETICS = {
+  wisp:   { name: 'Pale Wisp', cost: 0, color: '#8fd3e0' },
+  ember:  { name: 'Ember Wake', cost: 30, color: '#ff8a3d' },
+  frost:  { name: 'Hoarfrost', cost: 30, color: '#bfe6ff' },
+  petal:  { name: 'Grave Petals', cost: 50, color: '#f2a7c3' },
+  static: { name: 'Broken Static', cost: 50, color: '#d7c8ff' },
+  gilt:   { name: 'Gilded Remains', cost: 90, color: '#f5cf62' },
+  void:   { name: 'Void Rim', cost: 90, color: '#9c6bff' },
+};
+
+// ai: melee | fast | ranged | brute | blink
+const ENEMIES = {
+  rat:     { g: 'r', name: 'Loop Rat', hp: 5, atk: 2, def: 0, ai: 'fast', c: '#a89f8a' },
+  bones:   { g: 's', name: 'Shuffling Bones', hp: 9, atk: 3, def: 1, ai: 'melee', c: '#d8d0bb' },
+  cultist: { g: 'c', name: 'Lamp Cultist', hp: 7, atk: 3, def: 0, ai: 'ranged', c: '#e8b04a' },
+  wisp:    { g: 'w', name: 'Ink Wisp', hp: 7, atk: 4, def: 0, ai: 'ranged', c: '#6f8fd8' },
+  scribe:  { g: 'd', name: 'Drowned Scribe', hp: 14, atk: 5, def: 1, ai: 'melee', c: '#7fb3a8' },
+  pages:   { g: 'p', name: 'Page Swarm', hp: 6, atk: 3, def: 0, ai: 'fast', c: '#cfc6a8' },
+  shade:   { g: 'S', name: 'Shade', hp: 14, atk: 6, def: 1, ai: 'blink', c: '#9c8bd0' },
+  knightm: { g: 'M', name: 'Mirror Knight', hp: 24, atk: 8, def: 3, ai: 'brute', c: '#c8d4e0' },
+  archer:  { g: 'a', name: 'Glass Archer', hp: 11, atk: 6, def: 1, ai: 'ranged', c: '#a9e0f0' },
+  page:    { g: 'ǂ', name: 'Torn Page', hp: 6, atk: 4, def: 0, ai: 'fast', c: '#8fd3e0' },
+};
+
+const FLOORS = [
+  { name: 'The Antechamber of Footsteps', pool: ['rat', 'bones', 'cultist'], wall: '#2a2f3f', floor: '#12151e',
+    guardian: { g: 'B', name: 'The Bell-Ringer', hp: 44, atk: 6, def: 1, ai: 'brute', c: '#e8b04a', summon: 'rat' },
+    intro: 'Stone steps, worn into bowls by feet that never came back up. Somewhere below, a bell counts the fallen.' },
+  { name: 'The Drowned Library', pool: ['wisp', 'scribe', 'pages'], wall: '#1f3036', floor: '#0f171a',
+    guardian: { g: 'L', name: 'The Librarian Who Drowned', hp: 62, atk: 7, def: 2, ai: 'melee', c: '#7fb3a8', summon: 'pages' },
+    intro: 'Every shelf holds a ledger. Every ledger lists names. Yours is already written in, the ink still wet.' },
+  { name: 'The Hall of Unfinished Mirrors', pool: ['shade', 'knightm', 'archer'], wall: '#2c2740', floor: '#141221',
+    guardian: { mirror: true, name: 'The Mirror That Kept You' },
+    intro: 'The mirrors show you arriving, again and again. In some of them you are already a ghost.' },
+  { name: 'The Heart of the Loop', pool: ['page'], wall: '#3a2230', floor: '#150d12',
+    guardian: { g: 'Y', name: 'Ysolde, the First Echo', hp: 150, atk: 8, def: 3, ai: 'melee', c: '#8fd3e0', boss: true },
+    intro: '' },
+];
+const ROOMS_PER_FLOOR = 5;
+
+const REVEAL = [
+  'The last door opens onto a hall of lanterns, thousands of them, and in every lantern a small light paces like something caged.',
+  'You know these lights. You have met them: in the Antechamber, in the drowned stacks, in the mirrors. <em>Echoes.</em>',
+  'At the centre stands a woman made of the same pale light, holding a lantern that is still empty.',
+  '"I was the first to fall here," says <em>Ysolde</em>. "No one came for me. So I learned to keep the ones who came after. I recruit them. Three rooms at a time, forever."',
+  '"The loop is not a curse. It is a collection. And there is a lantern here with your name on it."',
+];
+const ENDING = [
+  'Ysolde\'s light breaks apart, and the lanterns open all at once.',
+  'The echoes do not leave. They turn, and for the first time they look at <em>you</em>: not as a stranger, but as one of them who got out.',
+  'Above, the loop begins again. It will remember you. This time, as the one who walked out.',
+];
+
+// Legends of the Loop: seed echoes so the loop is never empty.
+const LEGENDS = [
+  ['Mirelle the Twice-Fallen', 'rogue', 2, 4, 'Drowned Scribe', 38, 7, 2, ['dice', 'fang', 'whetstone'], 'palehand', 'petal'],
+  ['Brother Oswin', 'knight', 1, 5, 'The Bell-Ringer', 46, 5, 4, ['buckler', 'ironheart'], 'pulse', 'gilt'],
+  ['Kestrel', 'rogue', 3, 2, 'Shade', 40, 9, 2, ['dice', 'hook', 'warbrand', 'feather'], 'mirror', 'static'],
+  ['Old Tamsin', 'witch', 2, 5, 'The Librarian Who Drowned', 44, 6, 2, ['fang', 'mossring', 'lantern'], 'lostlamp', 'frost'],
+  ['Ash of Varrow', 'knight', 3, 4, 'Mirror Knight', 58, 7, 5, ['buckler', 'aegis', 'nettle'], 'grudge', 'ember'],
+  ['Pell', 'witch', 1, 3, 'Lamp Cultist', 30, 5, 1, ['fang', 'skull'], 'veil', 'wisp'],
+  ['The Quiet Cartographer', 'rogue', 3, 5, 'The Mirror That Kept You', 50, 10, 3, ['dice', 'crown', 'feather'], 'mourning', 'void'],
+  ['Hollis & Dog', 'knight', 2, 2, 'Ink Wisp', 42, 6, 3, ['buckler', 'heartroot', 'skull'], 'bell', 'ember'],
+].map(([name, origin, floor, room, killer, hp, atk, def, relics, echoRelic, fx], i) => ({
+  id: 'legend-' + i, owner: 'legend', legend: true, name, origin, floor, room, killer,
+  base: { hp, atk, def }, relics, echoRelic, fx, at: Date.UTC(2026, 0, 1 + i),
+}));
+</script>
+<script>
+"use strict";
+/* ============ persistence ============
+   Shared (claude.ai artifact with db+user): every viewer owns two shared docs and one private one:
+     echoes/<id>       {list:[echo]}  their newest echoes (others fight/recruit these)
+     encounters/<id>   {log:[entry]}  every echo they met; owners read these for notifications + boards
+     data/users/<id>/profile          shards, cosmetics, reward ledger (private)
+   Anywhere else: localStorage, with legends + simulated wanderers standing in for other players. */
+const LS_KEY = 'echo-run:v1';
+const lsGet = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; } };
+const lsSet = v => { try { localStorage.setItem(LS_KEY, JSON.stringify(v)); } catch {} };
+const clone = o => JSON.parse(JSON.stringify(o));
+const newProfile = () => ({ name: '', origin: 'knight', fx: 'wisp', owned: ['wisp'], shards: 0, seenTs: Date.now(),
+  ledger: {}, codex: [], best: 0, runs: 0, wins: 0, notes: [] });
+// Shared docs are other people's input: rebuild every field, clamp stats, drop unknown relics, owner = doc path.
+function cleanEcho(e, owner) {
+  if (!e || typeof e !== 'object' || typeof e.id !== 'string') return null;
+  const num = (v, lo, hi, d) => Number.isFinite(v) ? clamp(Math.round(v), lo, hi) : d;
+  return { id: e.id.slice(0, 40), owner, name: String(e.name || 'Nameless').slice(0, 18), origin: ORIGINS[e.origin] ? e.origin : 'knight',
+    floor: num(e.floor, 1, FLOORS.length, 1), room: num(e.room, 0, ROOMS_PER_FLOOR, 1), killer: String(e.killer || 'the dark').slice(0, 40),
+    base: { hp: num(e.base?.hp, 10, 120, 30), atk: num(e.base?.atk, 1, 25, 4), def: num(e.base?.def, 0, 12, 1) },
+    relics: (Array.isArray(e.relics) ? e.relics : []).filter(r => LOOT.includes(r) || ECHO_RELICS.includes(r)).slice(0, 20),
+    echoRelic: ECHO_RELICS.includes(e.echoRelic) ? e.echoRelic : ECHO_RELICS[0], fx: COSMETICS[e.fx] ? e.fx : 'wisp', at: num(e.at, 0, 9e15, 0) };
+}
+const cleanList = (l, owner, n) => (Array.isArray(l) ? l : []).map(e => cleanEcho(e, owner)).filter(Boolean).slice(0, n);
+const cleanLog = l => (Array.isArray(l) ? l : []).filter(x => x && typeof x.e === 'string' && ['r', 'd', 'w'].includes(x.t) && Number.isFinite(x.ts))
+  .slice(0, MAX_LOG).map(x => ({ e: x.e.slice(0, 40), o: String(x.o), n: String(x.n || '?').slice(0, 18), f: Number(x.f) || null, t: x.t, ts: x.ts, by: String(x.by || 'someone').slice(0, 18) }));
+const WANDERERS = ['Ivo', 'Brisk', 'Maud', 'Tern', 'Coralie', 'Fenwick', 'Una', 'Rook', 'Sabel', 'Dace', 'Wren', 'Halloran'];
+
+const Store = {
+  mode: 'local', me: 'local-me', db: null, profile: newProfile(),
+  echoesByOwner: {}, pastByOwner: {}, logs: {}, simAt: 0, onChange() {}, q: {},
+
+  async init() {
+    try {
+      const [db, user] = await Promise.all([window.claude?.use?.('db'), window.claude?.use?.('user')]);
+      const id = db && user ? await user.id() : null;
+      if (id) return await this.initShared(db, id);
+    } catch (e) { console.warn('shared loop unavailable, going local', e); }
+    this.initLocal();
+  },
+  initLocal() {
+    const s = lsGet();
+    this.profile = this.fixProfile(s.profile);
+    this.echoesByOwner = s.echoes || {};
+    this.pastByOwner = s.past || {};
+    this.logs = s.logs || {};
+    this.simAt = s.simAt || 0;
+    this.simulate(this.simAt);
+    this.saveLocal();
+  },
+  async initShared(db, id) {
+    this.mode = 'shared'; this.db = db; this.me = id;
+    const p = await db.doc(`data/users/${id}/profile`).get();
+    this.profile = this.fixProfile(p.exists ? clone(p.data()) : null);
+    if (!p.exists) this.saveProfile();
+    const fail = e => console.warn('db subscription ended', e);
+    await Promise.race([new Promise(res => {
+      let n = 0; const done = () => { if (++n === 2) res(); this.onChange(); };
+      db.collection('echoes').onSnapshot(s => { const m = {}, pm = {};
+        s.docs.forEach(d => { const v = d.data() || {}; m[d.id] = cleanList(v.list, d.id, ECHOES_PER_PLAYER); pm[d.id] = cleanList(v.past, d.id, 12); });
+        this.echoesByOwner = m; this.pastByOwner = pm; done(); }, fail);
+      db.collection('encounters').onSnapshot(s => { const m = {}; s.docs.forEach(d => m[d.id] = cleanLog(d.data()?.log)); this.logs = m; done(); }, fail);
+    }), new Promise(res => setTimeout(res, 8000))]);
+  },
+  fixProfile(p) {
+    const f = { ...newProfile(), ...(p || {}) };
+    if (!ORIGINS[f.origin]) f.origin = 'knight';
+    if (!Array.isArray(f.owned) || !f.owned.includes('wisp')) f.owned = ['wisp', ...(Array.isArray(f.owned) ? f.owned : [])];
+    if (!COSMETICS[f.fx] || !f.owned.includes(f.fx)) f.fx = 'wisp';
+    return f;
+  },
+  saveLocal() { if (this.mode === 'local') lsSet({ profile: this.profile, echoes: this.echoesByOwner, past: this.pastByOwner, logs: this.logs, simAt: this.simAt }); },
+  put(path, data) { // one write at a time per doc
+    const run = () => this.db.doc(path).set(data).catch(e => { console.warn('write failed', path, e); if (e?.code === 'quota_exceeded') toast('The loop is full: old echoes must fade first.'); });
+    return (this.q[path] = (this.q[path] || Promise.resolve()).then(run));
+  },
+  saveProfile() { this.mode === 'shared' ? this.put(`data/users/${this.me}/profile`, clone(this.profile)) : this.saveLocal(); },
+  allEchoes() { return [...LEGENDS, ...Object.values(this.echoesByOwner).flat()]; },
+  allKnown() { return [...this.allEchoes(), ...Object.values(this.pastByOwner).flat()]; }, // retired echoes stay in the hall of fame
+  myEchoes() { return this.echoesByOwner[this.me] || []; },
+  addEcho(echo) {
+    const all = [echo, ...clone(this.myEchoes())], list = all.slice(0, ECHOES_PER_PLAYER);
+    const past = [...all.slice(ECHOES_PER_PLAYER), ...clone(this.pastByOwner[this.me] || [])].slice(0, 12);
+    this.echoesByOwner = { ...this.echoesByOwner, [this.me]: list };
+    this.pastByOwner = { ...this.pastByOwner, [this.me]: past };
+    this.mode === 'shared' ? this.put(`echoes/${this.me}`, { list, past }) : this.saveLocal();
+  },
+  logEncounter(echo, t, byName) {
+    const entry = { e: echo.id, o: echo.owner, n: echo.name, f: echo.floor, t, ts: Date.now(), by: byName };
+    const log = [entry, ...clone(this.logs[this.me] || [])].slice(0, MAX_LOG);
+    this.logs = { ...this.logs, [this.me]: log };
+    this.mode === 'shared' ? this.put(`encounters/${this.me}`, { log }) : this.saveLocal();
+  },
+  // Offline stand-in for other players: one wanderer visit per hour you were away (max 60), weighted toward your echoes.
+  simulate(since) {
+    const now = Date.now(), from = since || now - 10 * 864e5;
+    const ticks = Math.min(60, Math.floor((now - from) / 36e5));
+    if (ticks < 1) return;
+    const log = [...(this.logs.sim || [])], mine = this.myEchoes();
+    const r = rng(hash(from));
+    for (let i = 1; i <= ticks; i++) {
+      const pool = mine.length && r() < .55 ? mine : LEGENDS;
+      const e = pool[Math.floor(r() * pool.length)], roll = r();
+      const t = roll < .55 ? 'r' : roll < .88 ? 'd' : 'w';
+      log.unshift({ e: e.id, o: e.owner, n: e.name, f: e.floor, t, ts: Math.round(from + (now - from) * i / ticks) - 1, by: WANDERERS[Math.floor(r() * WANDERERS.length)] });
+    }
+    this.logs = { ...this.logs, sim: log.slice(0, MAX_LOG) };
+    this.simAt = now;
+  },
+};
+
+/* ============ the social loop (pure; see selfTest) ============ */
+const allEntries = logs => Object.entries(logs).flatMap(([who, log]) => (log || []).map(x => ({ ...x, u: who })));
+
+function tally(logs, keep = () => true) { // echoId -> {r: recruited, d: defeated, w: won, n, o, f}
+  const m = {};
+  for (const x of allEntries(logs)) if (keep(x)) { const t = m[x.e] ||= { id: x.e, r: 0, d: 0, w: 0, n: x.n, o: x.o, f: x.f }; t[x.t] = (t[x.t] || 0) + 1; }
+  return m;
+}
+
+// Owner-side settlement: new encounters with MY echoes -> notifications + capped recruit rewards.
+function settle(profile, logs, me) {
+  const fresh = allEntries(logs).filter(x => x.o === me && x.ts > profile.seenTs).sort((a, b) => a.ts - b.ts);
+  const ledger = { ...profile.ledger }, groups = {};
+  let gained = 0, capped = 0, self = 0;
+  for (const x of fresh) {
+    if (x.t === 'r') {
+      const k = dayKey(x.ts);
+      if (x.u === me) self++;                                        // recruiting yourself pays nothing
+      else if ((ledger[k] || 0) < DAILY_RECRUIT_CAP) { ledger[k] = (ledger[k] || 0) + 1; gained += RECRUIT_REWARD; }
+      else capped++;                                                 // over today's cap: counted, not paid
+    }
+    const g = groups[x.e] ||= { n: x.n, f: x.f, r: 0, d: 0, w: 0, who: [] };
+    g[x.t]++;
+    if (x.u !== me && !g.who.includes(x.by) && g.who.length < 3) g.who.push(x.by);
+  }
+  const cutoff = dayKey(Date.now() - 8 * 864e5);
+  for (const k of Object.keys(ledger)) if (k < cutoff) delete ledger[k];
+  return { gained, capped, self, ledger, groups, count: fresh.length, seenTs: fresh.length ? fresh[fresh.length - 1].ts : profile.seenTs };
+}
+
+function describeGroup(g) {
+  const bits = [];
+  if (g.r) bits.push(`recruited ${g.r}×`);
+  if (g.d) bits.push(`defeated ${g.d}×`);
+  if (g.w) bits.push(`won ${g.w} fight${g.w > 1 ? 's' : ''}`);
+  const who = g.who.length ? ` by ${g.who.join(', ')}${g.r + g.d + g.w > g.who.length ? ' and others' : ''}` : '';
+  return `Your echo “${g.n}” (floor ${g.f}) was ${bits.join(', ')}${who}.`;
+}
+
+function runSettlement() {
+  const p = Store.profile, s = settle(p, Store.logs, Store.me);
+  if (!s.count) return;
+  const notes = Object.values(s.groups).map(g => ({ k: g.w && !g.r ? 'red' : '', text: describeGroup(g), ts: s.seenTs }));
+  if (s.gained || s.capped) notes.push({ k: 'gold', ts: s.seenTs, text: `+${s.gained} shards from recruits` + (s.capped ? ` · ${s.capped} over the daily cap of ${DAILY_RECRUIT_CAP}, unpaid` : '') + (s.self ? ` · ${s.self} self-recruit, unpaid` : '') });
+  Object.assign(p, { shards: p.shards + s.gained, ledger: s.ledger, seenTs: s.seenTs, notes: [...notes, ...p.notes].slice(0, 24) });
+  Store.saveProfile();
+  if (typeof toast === 'function') notes.forEach(n => toast(n.text));
+}
+</script>
+<script>
+"use strict";
+/* ============ run engine ============ */
+const W = 11, H = 9, T = 60, DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+let G = null;
+let CLEAR_DELAY = 380;
+const later = (fn, ms) => TEST ? fn() : setTimeout(fn, ms);
+
+function statsOf(base, relics) {
+  const s = { hp: 0, atk: 0, def: 0, crit: 0, steal: 0, thorns: 0, dodge: 0, killHeal: 0, clearHeal: 0, first: 0, regen: 0, revive: 0, allyRooms: 0 };
+  for (const r of relics) for (const [k, v] of Object.entries(RELICS[r]?.m || {})) s[k] += v;
+  s.max = base.hp + s.hp; s.atk += base.atk; s.def += base.def;
+  s.dodge = Math.min(s.dodge, .5); s.crit = Math.min(s.crit, .6);
+  return s;
+}
+function refresh(e) {
+  const old = e.s ? e.s.max : null;
+  e.s = statsOf(e.base, e.relics);
+  if (old != null && e.s.max > old) e.hp += e.s.max - old;
+  e.hp = Math.min(e.hp ?? e.s.max, e.s.max);
+}
+const echoPower = echo => statsOf(echo.base, [...echo.relics, echo.echoRelic]);
+function bestRelic(echo, owned) { // "fight it for its best relic": rarest one you don't already carry
+  return [echo.echoRelic, ...echo.relics].filter(r => RELICS[r] && !owned.includes(r)).sort((a, b) => RANK[RELICS[b].r] - RANK[RELICS[a].r])[0] || null;
+}
+
+function mkEnt(o) { const e = { turn: 0, relics: [], ...o }; refresh(e); e.hp = e.s.max; e.px = e.x; e.py = e.y; return e; }
+function mkEnemy(def, x, y, mult = 1, extra = {}) {
+  return mkEnt({ kind: 'enemy', name: def.name, g: def.g, c: def.c, ai: def.ai, summon: def.summon, boss: def.boss, x, y,
+    base: { hp: Math.round(def.hp * mult), atk: def.atk + (extra.atk || 0), def: def.def }, ...extra.o });
+}
+function mkEchoEnt(echo, role, x, y, hpMul = 1, atkMul = 1) {
+  const s = echoPower(echo);
+  return mkEnt({ kind: role, isEcho: true, echo, name: echo.name, g: '@', fx: echo.fx, c: COSMETICS[echo.fx]?.color || '#8fd3e0', ai: 'melee', x, y,
+    base: { hp: Math.max(6, Math.round(echo.base.hp * hpMul)), atk: Math.max(1, Math.round(echo.base.atk * atkMul)), def: echo.base.def },
+    relics: [...echo.relics, echo.echoRelic].filter(r => r !== 'quill' || role === 'enemy') , power: s });
+}
+
+function newRun() {
+  const p = Store.profile, o = ORIGINS[p.origin];
+  const pl = mkEnt({ kind: 'player', name: p.name, g: '@', c: o.color, x: 5, y: H - 2, base: { hp: o.hp, atk: o.atk, def: o.def }, relics: [...o.relics] });
+  G = { floor: 0, room: 0, p: pl, ents: [pl], ally: null, allyLeft: 0, logs: [], met: [], echoFloor: false, earned: 0, kills: 0,
+    over: false, lock: false, turn: 0, grid: null, type: 'fight', hostile: false, fighting: null, fx: [], shots: [], parts: [] };
+}
+
+/* ---- grid ---- */
+const wall = (x, y) => !G.grid[y] || G.grid[y][x] !== 0;
+const entAt = (x, y) => G.ents.find(e => e.hp > 0 && e.x === x && e.y === y);
+const free = (x, y) => !wall(x, y) && !entAt(x, y);
+const dist = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+const adj = (a, b) => dist(a, b) === 1;
+function genGrid() {
+  for (let tries = 0; tries < 80; tries++) {
+    const g = Array.from({ length: H }, (_, y) => Array.from({ length: W }, (_, x) => (x === 0 || y === 0 || x === W - 1 || y === H - 1) ? 1 : 0));
+    for (let i = ri(3, 7); i > 0; i--) {
+      const x = ri(2, W - 3), y = ri(2, H - 3); g[y][x] = 1;
+      if (R() < .45) { const [dx, dy] = pick(DIRS); if (x + dx > 1 && x + dx < W - 2 && y + dy > 1 && y + dy < H - 2) g[y + dy][x + dx] = 1; }
+    }
+    g[H - 2][5] = 0;
+    if (flood(g, 5, H - 2).size === g.flat().filter(v => v === 0).length) return g;
+  }
+  return Array.from({ length: H }, (_, y) => Array.from({ length: W }, (_, x) => (x === 0 || y === 0 || x === W - 1 || y === H - 1) ? 1 : 0));
+}
+function flood(g, sx, sy) { // BFS distances over floor tiles, keyed "x,y"
+  const d = new Map([[sx + ',' + sy, 0]]), q = [[sx, sy]];
+  while (q.length) { const [x, y] = q.shift(); for (const [dx, dy] of DIRS) { const k = (x + dx) + ',' + (y + dy); if (g[y + dy]?.[x + dx] === 0 && !d.has(k)) { d.set(k, d.get(x + ',' + y) + 1); q.push([x + dx, y + dy]); } } }
+  return d;
+}
+function freeSpot(near, minFrom) { // random free tile, optionally adjacent to `near`, optionally >= 4 away from `minFrom`
+  const spots = [];
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+    if (!free(x, y)) continue;
+    if (near && dist({ x, y }, near) !== 1) continue;
+    if (minFrom && dist({ x, y }, minFrom) < 4) continue;
+    spots.push({ x, y });
+  }
+  return spots.length ? pick(spots) : null;
+}
+function stepToward(e, tgt) { // one step along the shortest wall-aware path, around bodies
+  const d = flood(G.grid, tgt.x, tgt.y), here = d.get(e.x + ',' + e.y) ?? 99;
+  let best = null, bestD = here;
+  for (const [dx, dy] of shuffle([...DIRS])) {
+    const nx = e.x + dx, ny = e.y + dy, nd = d.get(nx + ',' + ny);
+    if (nd != null && nd < bestD && free(nx, ny)) { best = [dx, dy]; bestD = nd; }
+  }
+  if (!best) for (const [dx, dy] of shuffle([...DIRS])) { const nd = d.get((e.x + dx) + ',' + (e.y + dy)); if (nd != null && nd <= here && free(e.x + dx, e.y + dy)) { best = [dx, dy]; break; } }
+  return best;
+}
+function moveEnt(e, tgt) { const s = stepToward(e, tgt); if (s) { e.x += s[0]; e.y += s[1]; } return !!s; }
+function lineClear(a, b) {
+  if (a.x !== b.x && a.y !== b.y) return false;
+  const dx = Math.sign(b.x - a.x), dy = Math.sign(b.y - a.y);
+  for (let x = a.x + dx, y = a.y + dy; x !== b.x || y !== b.y; x += dx, y += dy) if (wall(x, y) || entAt(x, y)) return false;
+  return true;
+}
+
+/* ---- combat ---- */
+function float(e, text, c) { G.fx.push({ x: e.x, y: e.y, text, c, t: 0 }); }
+function log(msg) { G.logs.unshift(msg); G.logs.length = Math.min(G.logs.length, 40); }
+function heal(e, n) { const b = e.hp; e.hp = Math.min(e.s.max, e.hp + n); if (e.hp > b) float(e, '+' + (e.hp - b), '#86b77a'); }
+function hit(a, d, ranged) {
+  if (R() < d.s.dodge) { float(d, 'dodge', '#8b8676'); return; }
+  let dmg = a.s.atk + (d.hp === d.s.max ? a.s.first : 0);
+  const crit = R() < a.s.crit;
+  if (crit) dmg *= 2;
+  dmg = Math.max(1, dmg - d.s.def);
+  d.hp -= dmg; d.flash = 1;
+  float(d, (crit ? '✶' : '') + dmg, crit ? '#e8b04a' : '#cf5a4e');
+  if (a.s.steal) heal(a, a.s.steal);
+  if (d.hp <= 0) kill(d, a);
+  else if (!ranged && d.s.thorns) { a.hp -= d.s.thorns; a.flash = 1; float(a, d.s.thorns, '#cf5a4e'); if (a.hp <= 0) kill(a, d); }
+}
+function shoot(a, d) { G.shots.push({ x0: a.x, y0: a.y, x1: d.x, y1: d.y, c: a.c, t: 0 }); hit(a, d, true); }
+function kill(d, by) {
+  if (d.s.revive > (d.revived || 0)) { d.revived = (d.revived || 0) + 1; d.hp = Math.ceil(d.s.max / 2); float(d, 'rises', '#e8b04a'); log(`${d.name} rises from the ash.`); return; }
+  d.hp = 0;
+  if (by && by.hp > 0 && by.s.killHeal) heal(by, by.s.killHeal);
+  if (d.kind === 'player') return die(by ? by.name : 'the dark', by);
+  if (d.kind === 'ally') { log(`“${d.name}” fades early.`); G.ally = null; G.allyLeft = 0; return; }
+  G.kills++;
+  if (d.isEcho && G.fighting && d.echo.id === G.fighting.id) {
+    const r = bestRelic(G.fighting, G.p.relics);
+    G.prize = r;
+    if (r) { G.p.relics.push(r); refresh(G.p); log(`You take ${RELICS[r].name} from “${d.name}”.`); }
+    const pr = Store.profile; if (r && RELICS[r].r === 'echo' && !pr.codex.includes(r)) { pr.codex.push(r); Store.saveProfile(); }
+    Store.logEncounter(G.fighting, 'd', G.p.name);
+    G.earned += 2; G.fighting = null;
+  } else log(`${d.name} falls.`);
+}
+
+/* ---- turns ---- */
+function playerAct(dx, dy) {
+  if (!G || G.over || G.lock) return;
+  const pl = G.p;
+  if (dx || dy) {
+    const nx = pl.x + dx, ny = pl.y + dy, t = entAt(nx, ny);
+    if (t && t.kind === 'enemy') hit(pl, t);
+    else if (t && t.kind === 'ally') { t.x = pl.x; t.y = pl.y; pl.x = nx; pl.y = ny; }
+    else if (!wall(nx, ny)) { pl.x = nx; pl.y = ny; }
+    else return;
+  }
+  endTurn();
+}
+function endTurn() {
+  G.turn++;
+  for (const e of [...G.ents]) { if (G.over) return; if (e.hp > 0 && e.kind !== 'player') act(e); }
+  if (G.over) return;
+  if (G.turn % 4 === 0) for (const e of G.ents) if (e.hp > 0 && e.s.regen) heal(e, e.s.regen);
+  G.ents = G.ents.filter(e => e.hp > 0 || e.kind === 'player');
+  if (G.hostile && !G.ents.some(e => e.kind === 'enemy')) { G.hostile = false; G.lock = true; later(onClear, CLEAR_DELAY); }
+  hud();
+}
+function act(e) {
+  e.turn++;
+  if (e.ai === 'brute' && e.turn % 2 === 0) return;  // slow but heavy
+  const foes = G.ents.filter(o => o.hp > 0 && (e.kind === 'enemy' ? o.kind !== 'enemy' : o.kind === 'enemy'));
+  if (e.kind === 'ally' && !foes.length) { if (dist(e, G.p) > 2) moveEnt(e, G.p); return; }
+  if (!foes.length) return;
+  if (e.summon && e.turn % 5 === 0) summon(e);
+  if (e.boss && e.turn % 4 === 2) summonEcho(e);
+  const tgt = foes.reduce((a, b) => dist(e, b) < dist(e, a) ? b : a);
+  if (adj(e, tgt)) return hit(e, tgt);
+  if (e.ai === 'ranged' && dist(e, tgt) <= 5 && lineClear(e, tgt)) return shoot(e, tgt);
+  if (e.ai === 'blink' && e.turn % 3 === 0) { const s = freeSpot(tgt); if (s) { e.x = e.px = s.x; e.y = e.py = s.y; float(e, 'blink', e.c); return; } }
+  moveEnt(e, tgt);
+  if (e.ai === 'fast' && !adj(e, tgt)) moveEnt(e, tgt);
+}
+function summon(e) {
+  if (G.ents.filter(x => x.kind === 'enemy').length >= 5) return;
+  const s = freeSpot(e) || freeSpot(null, G.p); if (!s) return;
+  G.ents.push(mkEnemy(ENEMIES[e.summon], s.x, s.y)); log(`${e.name} calls for help.`);
+}
+function summonEcho(boss) { // Ysolde recruits the fallen: real echoes from the loop fight for her
+  if (G.ents.filter(x => x.isEcho && x.kind === 'enemy').length >= 2) return;
+  const pool = Store.allEchoes(); const echo = pick(pool), s = freeSpot(boss) || freeSpot(null, G.p);
+  if (!echo || !s) return;
+  G.ents.push(mkEchoEnt(echo, 'enemy', s.x, s.y, .4, .6));
+  log(`Ysolde lifts her lantern. “${echo.name}” answers.`);
+}
+
+/* ---- rooms ---- */
+function enterRoom(type) {
+  G.room++; G.type = type; G.turn = 0; G.prize = null; G.fighting = null;
+  G.grid = genGrid();
+  const pl = G.p; pl.x = pl.px = 5; pl.y = pl.py = H - 2;
+  G.ents = [pl];
+  if (G.ally) {
+    if (G.allyLeft <= 0) { log(`“${G.ally.name}” bows and returns to the loop.`); toast(`“${G.ally.name}” returned to the loop.`); G.ally = null; }
+    else { G.allyLeft--; const s = freeSpot(pl) || freeSpot(); Object.assign(G.ally, { x: s.x, y: s.y, px: s.x, py: s.y }); G.ents.push(G.ally); }
+  }
+  const F = FLOORS[G.floor];
+  const spawn = (def, mult = 1, extra) => { const s = freeSpot(null, pl); if (s) G.ents.push(mkEnemy(def, s.x, s.y, mult, extra)); };
+  if (type === 'fight') { for (let i = Math.min(5, 2 + Math.floor(G.room / 2) + (G.floor ? 1 : 0)); i > 0; i--) spawn(ENEMIES[pick(F.pool)], 1 + G.room * .05); }
+  else if (type === 'elite') { const d = ENEMIES[pick(F.pool)]; spawn({ ...d, name: 'Elder ' + d.name, g: d.g.toUpperCase() }, 2.4, { atk: 2 }); spawn(ENEMIES[pick(F.pool)]); }
+  else if (type === 'guardian') {
+    const gd = F.guardian, sp = free(5, 2) ? { x: 5, y: 2 } : freeSpot(null, pl);
+    if (gd.mirror) G.ents.push(mkEnt({ kind: 'enemy', name: gd.name, g: '@', c: '#c8d4e0', ai: 'melee', x: sp.x, y: sp.y, base: { ...pl.base, hp: Math.round(pl.s.max * 1.1) }, relics: pl.relics.filter(r => r !== 'quill') }));
+    else G.ents.push(mkEnemy(gd, sp.x, sp.y));
+  }
+  G.hostile = G.ents.some(e => e.kind === 'enemy');
+  log(`Floor ${G.floor + 1}, room ${G.room}: ${ROOM_LABEL[type]}.`);
+  hud();
+  if (type === 'echo') echoRoom();
+  else if (type === 'rest') restRoom();
+  else if (type === 'relic') relicRoom();
+}
+const ROOM_LABEL = { fight: 'a fight', elite: 'an elder foe', echo: 'an echo waits', rest: 'a quiet alcove', relic: 'an altar', guardian: 'the guardian' };
+
+function onClear() {
+  if (G.over) return;
+  const pl = G.p;
+  if (pl.s.clearHeal) heal(pl, pl.s.clearHeal);
+  if (G.ally && G.ally.s.clearHeal) heal(G.ally, G.ally.s.clearHeal);
+  G.earned += 1;
+  if (G.type === 'guardian') {
+    G.earned += 3;
+    if (G.floor === FLOORS.length - 1) return victory();
+    pl.hp = pl.s.max;
+    return rewardModal('guardian', nextFloor);
+  }
+  rewardModal(G.type, doorModal);
+}
+function nextFloor() {
+  G.floor++; G.room = 0; G.echoFloor = false;
+  const F = FLOORS[G.floor];
+  if (G.floor === FLOORS.length - 1) {
+    const names = shuffle(Store.allEchoes().map(e => e.name)).slice(0, 5);
+    return storyModal(F.name, [...REVEAL.slice(0, 2), h('p', { class: 'story' }, `Among the lanterns you read names: ${names.join(', ')}.`), ...REVEAL.slice(2)], 'Face her', () => enterRoom('guardian'));
+  }
+  storyModal(F.name, [F.intro], 'Descend', () => enterRoom('fight'));
+}
+function doorTypes() {
+  if (G.room >= ROOMS_PER_FLOOR - 1) return ['guardian'];
+  const w = { fight: 40, elite: 14, echo: 26, rest: 10, relic: 10 };
+  const roll = () => { let r = R() * 100; for (const [k, v] of Object.entries(w)) if ((r -= v) < 0) return k; return 'fight'; };
+  const a = roll(); let b = roll(); for (let i = 0; b === a && i < 20; i++) b = roll(); if (b === a) b = a === 'fight' ? 'rest' : 'fight';
+  const out = [a, b];
+  if (G.room === ROOMS_PER_FLOOR - 2 && !G.echoFloor && !out.includes('echo')) out[1] = 'echo';  // every floor offers at least one echo
+  return out;
+}
+function pickEcho() {
+  const all = Store.allEchoes().filter(e => !G.met.includes(e.id));
+  if (!all.length) return null;
+  const others = all.filter(e => e.owner !== Store.me);
+  const pool = others.length && (R() < .8 || others.length === all.length) ? others : all;
+  const near = pool.filter(e => Math.abs(e.floor - (G.floor + 1)) <= 1);
+  return pick(near.length ? near : pool);
+}
+</script>
+<script>
+"use strict";
+/* ============ UI: modals and room events ============ */
+function toast(text) { const d = h('div', {}, text); $('#toast').prepend(d); setTimeout(() => d.remove(), 2600); }
+function modal(...nodes) {
+  if (G) G.lock = true;
+  const b = $('#modal-body'); b.replaceChildren(...nodes.flat().filter(Boolean));
+  $('#modal').hidden = false; b.scrollTop = 0;
+  b.querySelector('.choice')?.focus({ preventScroll: true });
+}
+function closeModal() { $('#modal').hidden = true; if (G) G.lock = false; }
+const choice = (name, desc, fn) => h('button', { class: 'choice', on: { click: () => { closeModal(); fn(); } } }, h('span', { class: 'n' }, name), desc ? h('small', {}, desc) : null);
+const choices = (...c) => h('div', { class: 'choices' }, ...c);
+const storyP = x => { if (typeof x !== 'string') return x; const p = h('p', { class: 'story' }); p.innerHTML = x; return p; }; // strings here are our own constants
+const RCLS = { echo: 'echo', rare: 'rare', legend: 'legend', common: '' };
+const relicChip = r => { if (!RELICS[r]) return null; const d = RELICS[r].d + (RELICS[r].r === 'echo' ? ' (echo-only)' : '');
+  return h('span', { class: 'relic ' + RCLS[RELICS[r].r], title: d, on: { click: () => toast(`${RELICS[r].name}: ${d}`) } }, RELICS[r].name); }; // tap = the tooltip on touch
+const rarityTag = r => ({ common: '', rare: ' · rare', legend: ' · legendary', echo: ' · echo-only' })[RELICS[r].r];
+
+function storyModal(title, paras, btn, fn) {
+  modal(h('div', { class: 'eyebrow' }, `Floor ${G.floor + 1}`), h('h2', {}, title), paras.map(storyP), choices(choice(btn, '', fn)));
+}
+
+const BOONS = [
+  { name: 'Mend', d: 'Heal 60% of your max HP.', fn: p => heal(p, Math.ceil(p.s.max * .6)) },
+  { name: 'Temper', d: '+1 attack for the rest of the run.', fn: p => p.base.atk++ },
+  { name: 'Brace', d: '+1 defense for the rest of the run.', fn: p => p.base.def++ },
+  { name: 'Vigor', d: '+6 max HP, and heal 6.', fn: p => p.base.hp += 6 },
+];
+function rollRelics(n, tier) {
+  const out = [], owned = G.p.relics;
+  for (let i = 0; i < n * 8 && out.length < n; i++) {
+    const r = R() + tier + G.floor * .07, rar = r > 1.02 ? 'legend' : r > .62 ? 'rare' : 'common';
+    const pool = LOOT.filter(k => RELICS[k].r === rar && !owned.includes(k) && !out.includes(k));
+    if (pool.length) out.push(pick(pool));
+  }
+  return out;
+}
+function rewardModal(kind, next) {
+  const pl = G.p;
+  if (kind === 'echo') {
+    if (!G.prize) G.earned += 3;
+    return modal(h('div', { class: 'eyebrow' }, 'Echo defeated'), h('h2', {}, 'The echo breaks apart'),
+      G.prize ? h('p', {}, 'It leaves behind ', relicChip(G.prize), ' ', RELICS[G.prize].d) : h('p', {}, 'It carried nothing you lack. You gather 3 shards from the light.'),
+      h('p', { class: 'small muted' }, 'Its owner will hear how it fell.'), choices(choice('Go on', '', next)));
+  }
+  const opts = rollRelics(kind === 'relic' ? 3 : 2, { guardian: .55, elite: .3 }[kind] || 0)
+    .map(r => choice(RELICS[r].name + rarityTag(r), RELICS[r].d, () => { pl.relics.push(r); refresh(pl); log(`You take ${RELICS[r].name}.`); hud(); next(); }));
+  if (kind !== 'relic' || !opts.length) { const b = pick(BOONS); opts.push(choice(b.name, b.d, () => { b.fn(pl); refresh(pl); hud(); next(); })); }
+  modal(h('div', { class: 'eyebrow' }, kind === 'relic' ? 'An altar' : 'Spoils'),
+    h('h2', {}, kind === 'guardian' ? 'The guardian falls' : kind === 'relic' ? 'Something was left here' : 'The room goes quiet'),
+    kind === 'guardian' ? h('p', { class: 'small muted' }, 'You are healed to full before the stairs.') : null,
+    h('p', { class: 'small muted' }, 'Choose one.'), choices(...opts));
+}
+const DOOR = {
+  fight: ['A door with claw marks', 'A fight, then spoils.'], elite: ['A door that breathes', 'One elder foe. Better spoils.'],
+  echo: ['A door rimmed with frost', "Someone who fell here is waiting. Fight them or recruit them."],
+  rest: ['A curtained alcove', 'Rest or train.'], relic: ['A door with a lamp above it', 'An altar with relics, no fight.'],
+  guardian: ['The great door', 'The guardian of this floor.'],
+};
+function doorModal() {
+  const types = doorTypes();
+  modal(h('div', { class: 'eyebrow' }, `Floor ${G.floor + 1} · room ${G.room} of ${ROOMS_PER_FLOOR} cleared`),
+    h('h2', {}, types.length > 1 ? 'Two doors' : 'One door left'),
+    G.ally ? h('p', { class: 'small muted' }, `“${G.ally.name}” walks with you for ${G.allyLeft ? G.allyLeft + ' more room' + (G.allyLeft > 1 ? 's' : '') : 'no more rooms'}.`) : null,
+    choices(...types.map(t => choice(DOOR[t][0], DOOR[t][1], () => enterRoom(t)))));
+}
+function restRoom() {
+  const n = Math.ceil(G.p.s.max * .4);
+  modal(h('div', { class: 'eyebrow' }, 'A quiet alcove'), h('h2', {}, 'Breathe'), h('p', { class: 'lede' }, 'Someone left a bedroll and a whetstone. Neither is warm.'),
+    choices(choice('Rest', `Heal ${n} HP.`, () => { heal(G.p, n); hud(); doorModal(); }),
+      choice('Train', '+1 attack for the rest of the run.', () => { G.p.base.atk++; refresh(G.p); hud(); doorModal(); })));
+}
+function relicRoom() { rewardModal('relic', doorModal); }
+
+function echoCard(echo, t) {
+  const s = echoPower(echo);
+  return h('div', { class: 'echo-card' },
+    h('div', { class: 'row', style: 'justify-content:space-between' },
+      h('strong', { style: `color:${COSMETICS[echo.fx]?.color || 'inherit'};font:400 21px/1.1 var(--display)` }, echo.name),
+      h('span', { class: 'small muted' }, echo.legend ? 'Legend of the Loop' : echo.owner === Store.me ? 'your echo' : 'another adventurer')),
+    h('div', { class: 'small muted' }, `${ORIGINS[echo.origin]?.name || 'Wanderer'} · fell on floor ${echo.floor}, room ${echo.room}, to ${echo.killer} · ${COSMETICS[echo.fx]?.name || 'Pale Wisp'}`),
+    h('div', { class: 'small' }, `HP ${s.max} · ATK ${s.atk} · DEF ${s.def}`),
+    h('div', { class: 'relics' }, relicChip(echo.echoRelic), ...echo.relics.map(relicChip)),
+    t ? h('div', { class: 'small muted' }, `Recruited ${t.r}× · defeated ${t.d}× · won ${t.w} fight${t.w === 1 ? '' : 's'}`) : null);
+}
+function echoRoom() {
+  const echo = pickEcho();
+  if (!echo) return relicRoom();
+  G.met.push(echo.id); G.echoFloor = true;
+  const t = tally(Store.logs)[echo.id] || { r: 0, d: 0, w: 0 };
+  const prize = bestRelic(echo, G.p.relics), n = ALLY_ROOMS + G.p.s.allyRooms, mine = echo.owner === Store.me;
+  G.pending = echo;
+  modal(h('div', { class: 'eyebrow' }, 'An echo'), h('h2', {}, mine ? 'It wears your face.' : 'Someone fell here before you.'),
+    echoCard(echo, t),
+    mine ? h('p', { class: 'small muted' }, 'One of your own echoes. Recruiting yourself earns nothing.') : null,
+    choices(
+      choice(`Fight it for ${prize ? RELICS[prize].name : 'its memory'}`,
+        prize ? `${RELICS[prize].d}${RELICS[prize].r === 'echo' ? ' Only echoes carry this.' : ''} It fights as a miniboss.` : 'You already carry all it has. It fights as a miniboss.', () => fightEcho(echo)),
+      choice(`Recruit it for ${n} rooms`, `It fights beside you.${echo.legend || mine ? '' : ' Its owner is told, and rewarded.'}`, () => recruitEcho(echo))));
+}
+function fightEcho(echo) {
+  const gap = (G.floor + 1) - echo.floor, s = free(5, 2) ? { x: 5, y: 2 } : freeSpot(null, G.p);
+  const e = mkEchoEnt(echo, 'enemy', s.x, s.y, 1.4 * clamp(1 + .15 * gap, .7, 1.3), clamp(1 + .1 * gap, .75, 1.2));
+  G.fighting = echo; G.ents.push(e); G.hostile = true;
+  log(`You draw steel on “${echo.name}”.`); hud();
+}
+function recruitEcho(echo) {
+  Store.logEncounter(echo, 'r', G.p.name);
+  if (G.ally) log(`“${G.ally.name}” steps aside for “${echo.name}”.`);
+  const s = freeSpot(G.p) || freeSpot();
+  G.ally = mkEchoEnt(echo, 'ally', s.x, s.y, .8, .8);
+  G.allyLeft = ALLY_ROOMS + G.p.s.allyRooms;
+  G.ents = G.ents.filter(e => e.kind !== 'ally').concat(G.ally);
+  log(`“${echo.name}” joins you for ${G.allyLeft} rooms.`);
+  toast(echo.legend || echo.owner === Store.me ? `“${echo.name}” joins you.` : `“${echo.name}” joins you. Its owner will hear of it.`);
+  hud(); G.lock = true; later(doorModal, CLEAR_DELAY * 2);
+}
+
+/* ============ run end ============ */
+function die(killer, by) {
+  if (G.over) return;
+  G.over = true; G.p.hp = 0;
+  if (G.fighting && by?.isEcho && by.echo.id === G.fighting.id) Store.logEncounter(G.fighting, 'w', G.p.name);
+  const echo = { id: 'e' + uid(), owner: Store.me, name: G.p.name, origin: Store.profile.origin, floor: G.floor + 1, room: G.room,
+    killer: String(killer).slice(0, 40), base: { ...G.p.base }, fx: Store.profile.fx, at: Date.now() };
+  echo.echoRelic = ECHO_RELICS[hash(echo.id + killer) % ECHO_RELICS.length];
+  echo.relics = G.p.relics.filter(r => r !== echo.echoRelic).slice(0, 20);
+  Store.addEcho(echo);
+  log(`${G.p.name} falls. An echo stays behind.`); hud();
+  endRun(false, echo);
+}
+function victory() { G.over = true; endRun(true); }
+function endRun(won, echo) {
+  const p = Store.profile;
+  p.shards += G.earned; p.runs++; p.best = Math.max(p.best || 0, G.floor + 1); if (won) p.wins++;
+  Store.saveProfile();
+  const body = won ? ENDING.map(storyP) : [
+    h('p', { class: 'lede' }, `You fell on floor ${echo.floor}, room ${echo.room}, to ${echo.killer}. The loop keeps what falls in it.`),
+    h('div', { class: 'eyebrow' }, 'Your echo now waits for others'), echoCard(echo),
+    h('p', { class: 'small muted' }, `Other adventurers will meet it and choose to fight or recruit it. You get word either way, and ${RECRUIT_REWARD} shards per recruit (up to ${DAILY_RECRUIT_CAP} paid recruits a day). Only your newest ${ECHOES_PER_PLAYER} echoes stay in the loop.`)];
+  later(() => modal(h('div', { class: 'eyebrow' }, won ? 'The loop, broken for now' : 'Run over'), h('h2', {}, won ? 'You walked out.' : 'An echo is born.'), body,
+    h('p', { class: 'small' }, `+${G.earned} shards · ${G.kills} foes felled · reached floor ${G.floor + 1}`), choices(choice('Return to the mouth of the loop', '', toTitle))), CLEAR_DELAY + 200);
+}
+
+/* ============ HUD ============ */
+function hud() {
+  if (!G) return;
+  const pl = G.p, last = G.floor === FLOORS.length - 1;
+  $('#h-where').textContent = `${FLOORS[G.floor].name} · ${last ? 'the end' : `room ${G.room}/${ROOMS_PER_FLOOR}`}`;
+  $('#h-hpfill').style.width = (100 * clamp(pl.hp / pl.s.max, 0, 1)) + '%';
+  $('#h-hp').textContent = `${Math.max(0, pl.hp)} / ${pl.s.max}`;
+  $('#h-atk').textContent = pl.s.atk; $('#h-def').textContent = pl.s.def;
+  $('#h-ally').textContent = G.ally ? `Ally “${G.ally.name}” · ${G.allyLeft ? G.allyLeft + ' more room' + (G.allyLeft > 1 ? 's' : '') : 'last room'}` : '';
+  $('#relics').replaceChildren(...pl.relics.map(relicChip).filter(Boolean));
+  $('#log').replaceChildren(...G.logs.map(l => h('div', {}, l)));
+}
+</script>
+<script>
+"use strict";
+/* ============ title screen ============ */
+let TAB = 'rec';
+const ago = ts => { const m = Math.round((Date.now() - ts) / 6e4); return m < 1 ? 'just now' : m < 60 ? m + 'm ago' : m < 1440 ? Math.round(m / 60) + 'h ago' : Math.round(m / 1440) + 'd ago'; };
+function renderTitle() {
+  const p = Store.profile;
+  $('#c-shards').textContent = p.shards;
+  $('#c-week').textContent = weekKey().split('-')[1];
+  const net = $('#c-net'), owners = Object.keys(Store.echoesByOwner).length;
+  net.textContent = Store.mode === 'shared' ? `Shared loop · ${owners} adventurer${owners === 1 ? '' : 's'} with echoes` : 'Offline loop · other wanderers simulated';
+  net.className = 'chip' + (Store.mode === 'shared' ? ' net-on' : '');
+  if (document.activeElement !== $('#in-name')) $('#in-name').value = p.name;
+  $('#best').textContent = p.runs ? `${p.runs} run${p.runs > 1 ? 's' : ''} · deepest floor ${p.best}${p.wins ? ` · ${p.wins} escape${p.wins > 1 ? 's' : ''}` : ''}` : 'No runs yet';
+  $('#origins').replaceChildren(...Object.entries(ORIGINS).map(([k, o]) => h('button', { class: 'opt', 'aria-pressed': String(p.origin === k),
+    on: { click: () => { p.origin = k; Store.saveProfile(); renderTitle(); } } },
+    h('span', { class: 'n', style: `color:${o.color}` }, o.name), h('small', {}, o.blurb), h('small', {}, `HP ${o.hp} · ATK ${o.atk} · DEF ${o.def} · ${o.relics.map(r => RELICS[r].name).join(', ')}`))));
+  $('#fx').replaceChildren(...Object.entries(COSMETICS).map(([k, c]) => {
+    const own = p.owned.includes(k);
+    return h('button', { class: 'opt', 'aria-pressed': String(p.fx === k), disabled: !own && p.shards < c.cost, title: own ? 'Wear this effect' : `Unlock for ${c.cost} shards`,
+      on: { click: () => { if (!own) { if (p.shards < c.cost) return; p.shards -= c.cost; p.owned.push(k); toast(`Unlocked ${c.name}.`); } p.fx = k; Store.saveProfile(); renderTitle(); } } },
+      h('span', { class: 'sw', style: `color:${c.color}` }), h('span', {}, h('span', { class: 'n' }, c.name), h('br'), h('small', {}, own ? (p.fx === k ? 'Wearing' : 'Owned') : `${c.cost} shards`)));
+  }));
+  $('#cap-note').textContent = `Paid recruits today: ${p.ledger[dayKey()] || 0}/${DAILY_RECRUIT_CAP}`;
+  $('#inbox').replaceChildren(...(p.notes.length ? p.notes.map(n => h('div', { class: 'note ' + (n.k || '') }, n.text, h('span', { class: 'muted' }, ' · ' + ago(n.ts))))
+    : [h('div', { class: 'muted small' }, 'No word from the loop yet. When you fall, your echo stays behind, and you will hear whenever someone fights or recruits it.')]));
+  const all = tally(Store.logs), mine = Store.myEchoes();
+  $('#my-echoes').replaceChildren(...(mine.length ? [h('div', { class: 'eyebrow' }, 'In the loop now'), ...mine.map(e => { const t = all[e.id] || { r: 0, d: 0, w: 0 };
+    return h('div', {}, h('span', { style: `color:${COSMETICS[e.fx]?.color}` }, `“${e.name}”`), ` floor ${e.floor} · recruited ${t.r}× · defeated ${t.d}× · won ${t.w}`); })] : []));
+  renderBoard();
+  $('#foot').textContent = (Store.mode === 'shared'
+    ? 'Echoes here are left by everyone who opens this page. '
+    : 'Offline: your echoes and the Legends of the Loop live in this browser, and simulated wanderers meet them while you are away. Open the published page to share the loop with other players. ')
+    + `Recruit rewards: ${RECRUIT_REWARD} shards each, at most ${DAILY_RECRUIT_CAP} paid per day, none for recruiting yourself. Only your newest ${ECHOES_PER_PLAYER} echoes roam. Boards reset Monday 00:00 UTC.`;
+}
+function renderBoard() {
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === TAB)));
+  const box = $('#board'), p = Store.profile;
+  if (TAB === 'codex') return box.replaceChildren(
+    h('p', { class: 'small muted', style: 'padding-block:12px 4px' }, `Echo relics are born when an adventurer dies, and drop only from defeated echoes. Found ${p.codex.length} of ${ECHO_RELICS.length}.`),
+    h('table', { class: 'tbl' }, h('tbody', {}, ECHO_RELICS.map(r => { const f = p.codex.includes(r);
+      return h('tr', {}, h('td', {}, f ? relicChip(r) : h('span', { class: 'relic' }, '? ? ?')), h('td', { class: 'muted' }, f ? RELICS[r].d : 'Defeat echoes to find it.')); }))));
+  const wk = weekKey(), key = TAB === 'def' ? 'd' : 'r', hof = TAB === 'hof', idx = {};
+  for (const e of Store.allKnown()) idx[e.id] = e;
+  const rows = Object.values(tally(Store.logs, hof ? undefined : x => weekKey(x.ts) === wk)).filter(x => x[key] > 0)
+    .sort((a, b) => b[key] - a[key] || (b.r + b.d) - (a.r + a.d)).slice(0, hof ? 10 : 8);
+  if (!rows.length) return box.replaceChildren(h('p', { class: 'muted small', style: 'padding-block:12px' }, hof ? 'No echo has been recruited yet.' : 'No echoes met this week yet.'));
+  box.replaceChildren(h('table', { class: 'tbl' },
+    h('thead', {}, h('tr', {}, h('th', {}, '#'), h('th', {}, 'Echo'), h('th', {}, hof ? 'Build' : 'Where it fell'), h('th', { style: 'text-align:right' }, key === 'r' ? 'Recruited' : 'Defeated'))),
+    h('tbody', {}, rows.map((x, i) => { const e = idx[x.id];
+      return h('tr', {}, h('td', { class: 'muted' }, i + 1),
+        h('td', {}, h('span', { style: `color:${COSMETICS[e?.fx]?.color || 'inherit'}` }, x.n), h('span', { class: 'muted' }, x.o === Store.me ? ' · you' : e?.legend ? ' · legend' : '')),
+        h('td', { class: 'small' }, !e ? h('span', { class: 'muted' }, `faded · floor ${x.f ?? '?'}`)
+          : hof ? h('div', { class: 'relics' }, h('span', { class: 'muted' }, ORIGINS[e.origin]?.name || ''), relicChip(e.echoRelic), ...e.relics.map(relicChip))
+          : `${ORIGINS[e.origin]?.name || ''} · floor ${e.floor}, room ${e.room}`),
+        h('td', { class: 'num' }, x[key])); }))));
+}
+
+/* ============ rendering ============ */
+const MONO = '"JetBrains Mono", ui-monospace, Menlo, monospace';
+const CALM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const cv = $('#cv'), cx = cv.getContext('2d'), hcv = $('#hero-cv'), hx = hcv.getContext('2d');
+let K = 0; // backing-store scale; drawing stays in the 660x540 / 540x360 logical space
+function crisp() {
+  const k = Math.min(2, devicePixelRatio || 1); // ponytail: capped at 2, shadowBlur cost grows with pixels
+  if (k === K) return;
+  K = k;
+  for (const [c, x, w, hh] of [[cv, cx, W * T, H * T], [hcv, hx, 540, 360]]) { c.width = w * K; c.height = hh * K; x.setTransform(K, 0, 0, K, 0, 0); }
+}
+crisp(); addEventListener('resize', crisp);
+function emit(c, fx, x, y, s) {
+  const P = c._p ||= [], col = COSMETICS[fx]?.color || '#8fd3e0', r = Math.random, k = s / 60;
+  const add = o => P.push({ life: 1, dec: .02, r: 2 * k, c: col, vx: 0, vy: 0, ...o });
+  if (fx === 'ember') add({ x: x + (r() - .5) * s * .4, y: y + s * .15, vx: (r() - .5) * .6 * k, vy: -(.8 + r()) * k, c: r() < .5 ? '#ff8a3d' : '#ffd166', dec: .03 });
+  else if (fx === 'frost') add({ x: x + (r() - .5) * s * .9, y: y - s * .45, vy: .5 * k, shape: 'x', r: 3 * k, dec: .018 });
+  else if (fx === 'petal') add({ x: x + (r() - .5) * s, y: y - s * .5, vy: .55 * k, vx: .2 * k, shape: 'petal', r: 3.5 * k, sway: r() * TAU, dec: .014 });
+  else if (fx === 'static') add({ x: x + (r() - .5) * s * .6, y: y + (r() - .5) * s * .6, shape: 'line', r: (6 + r() * 10) * k, dec: .2, c: r() < .5 ? '#ff4fd8' : '#4ff3ff' });
+  else if (fx === 'gilt') add({ x, y, orbit: r() * TAU, rad: s * .42, spin: .04, dec: .012, r: 2.2 * k });
+  else if (fx === 'void') { const a = r() * TAU; add({ x: x + Math.cos(a) * s * .7, y: y + Math.sin(a) * s * .7, vx: -Math.cos(a) * .9 * k, vy: -Math.sin(a) * .9 * k, dec: .03 }); }
+  else add({ x: x + (r() - .5) * s * .5, y: y + s * .2, vx: (r() - .5) * .25 * k, vy: -.45 * k, dec: .016 });
+}
+function drawParts(c) {
+  const P = c._p || [];
+  for (const p of P) {
+    p.life -= p.dec;
+    if (p.orbit != null) { p.orbit += p.spin; p.px = p.x + Math.cos(p.orbit) * p.rad; p.py = p.y + Math.sin(p.orbit) * p.rad * .45; }
+    else { p.x += p.vx + (p.sway != null ? Math.sin(p.life * 9 + p.sway) * .4 : 0); p.y += p.vy; p.px = p.x; p.py = p.y; }
+    c.globalAlpha = Math.max(0, p.life); c.fillStyle = c.strokeStyle = p.c; c.lineWidth = 1.2;
+    c.beginPath();
+    if (p.shape === 'x') { c.moveTo(p.px - p.r, p.py); c.lineTo(p.px + p.r, p.py); c.moveTo(p.px, p.py - p.r); c.lineTo(p.px, p.py + p.r); c.stroke(); }
+    else if (p.shape === 'petal') { c.ellipse(p.px, p.py, p.r, p.r * .55, p.life * 6, 0, TAU); c.fill(); }
+    else if (p.shape === 'line') c.fillRect(p.px - p.r / 2, p.py, p.r, 1.5);
+    else { c.arc(p.px, p.py, p.r, 0, TAU); c.fill(); }
+  }
+  c.globalAlpha = 1; c._p = P.filter(p => p.life > 0);
+}
+function drawGhost(c, x, y, s, fx, t, alpha = 1) { // how an echo looks to everyone who meets it
+  const col = COSMETICS[fx]?.color || '#8fd3e0';
+  if (Math.random() < (CALM ? .08 : .4)) emit(c, fx, x, y, s);
+  const Y = y + (CALM ? 0 : Math.sin(t / 520 + x * .01) * s * .05);
+  c.save();
+  if (fx === 'void') { c.fillStyle = 'rgba(6,3,14,.9)'; c.shadowColor = col; c.shadowBlur = s * .35 * K; c.beginPath(); c.arc(x, Y, s * .36, 0, TAU); c.fill(); c.strokeStyle = col; c.lineWidth = Math.max(1.5, s * .03); c.stroke(); }
+  c.globalAlpha = alpha * (.62 + .22 * Math.sin(t / 340 + x));
+  c.shadowColor = col; c.shadowBlur = s * .45 * K;
+  c.font = `800 ${Math.round(s * .62)}px ${MONO}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+  if (fx === 'static' && Math.random() < .3) { c.fillStyle = '#ff4fd8'; c.fillText('@', x - s * .04, Y); c.fillStyle = '#4ff3ff'; c.fillText('@', x + s * .04, Y); }
+  c.fillStyle = col; c.fillText('@', x, Y + 1);
+  c.restore();
+}
+function drawRoom(t) {
+  const F = FLOORS[G.floor], c = cx;
+  c.fillStyle = F.floor; c.fillRect(0, 0, W * T, H * T);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (G.grid[y][x]) { c.fillStyle = F.wall; c.fillRect(x * T, y * T, T, T); c.fillStyle = 'rgba(255,255,255,.05)'; c.fillRect(x * T, y * T, T, 3); c.fillStyle = 'rgba(0,0,0,.3)'; c.fillRect(x * T, y * T + T - 5, T, 5); }
+    else { c.fillStyle = 'rgba(221,214,195,.07)'; c.fillRect(x * T + T / 2 - 1, y * T + T / 2 - 1, 2, 2); }
+  }
+  for (const e of G.ents) {
+    if (e.hp <= 0 && e.kind !== 'player') continue;
+    e.px += (e.x - e.px) * .35; e.py += (e.y - e.py) * .35;
+    const X = e.px * T + T / 2, Y = e.py * T + T / 2;
+    if (e.kind === 'ally') { c.strokeStyle = 'rgba(134,183,122,.55)'; c.lineWidth = 1.5; c.beginPath(); c.arc(X, Y, T * .44, 0, TAU); c.stroke(); }
+    if (e.isEcho) drawGhost(c, X, Y, T, e.fx, t);
+    else {
+      c.save(); c.shadowColor = e.c; c.shadowBlur = (e.kind === 'player' ? 18 : 8) * K; c.fillStyle = e.flash > 0 ? '#fff' : e.c;
+      c.font = `800 ${e.boss || e.kind === 'player' ? 38 : 34}px ${MONO}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(e.g, X, Y + 1); c.restore();
+    }
+    if (e.flash) e.flash = Math.max(0, e.flash - .08);
+    if (e.kind !== 'player') { const w = T * .7; c.fillStyle = 'rgba(0,0,0,.55)'; c.fillRect(X - w / 2, Y + T * .36, w, 4); c.fillStyle = e.kind === 'ally' ? '#86b77a' : '#cf5a4e'; c.fillRect(X - w / 2, Y + T * .36, w * clamp(e.hp / e.s.max, 0, 1), 4); }
+  }
+  const lx = G.p.px * T + T / 2, ly = G.p.py * T + T / 2, gr = c.createRadialGradient(lx, ly, T * 1.2, lx, ly, T * 7);
+  gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(4,5,9,.66)');
+  c.fillStyle = gr; c.fillRect(0, 0, W * T, H * T);
+  for (const s of G.shots) { s.t += .1; c.globalAlpha = Math.max(0, 1 - s.t); c.strokeStyle = s.c; c.lineWidth = 2; c.beginPath(); c.moveTo(s.x0 * T + T / 2, s.y0 * T + T / 2); c.lineTo(s.x1 * T + T / 2, s.y1 * T + T / 2); c.stroke(); }
+  c.globalAlpha = 1; G.shots = G.shots.filter(s => s.t < 1);
+  drawParts(c);
+  c.font = `800 ${Math.round(Math.max(16, 12 * W * T / (cv.clientWidth || W * T)))}px ${MONO}`; c.textAlign = 'center';
+  for (const f of G.fx) { f.t += .022; c.globalAlpha = Math.max(0, 1 - f.t); c.fillStyle = f.c; c.fillText(f.text, f.x * T + T / 2, f.y * T + T * .2 - f.t * 26); }
+  c.globalAlpha = 1; G.fx = G.fx.filter(f => f.t < 1);
+}
+function drawHero(t) {
+  const c = hx, w = 540, hh = 360, p = Store.profile, col = COSMETICS[p.fx]?.color || '#8fd3e0';
+  c.fillStyle = '#0e1118'; c.fillRect(0, 0, w, hh);
+  c.strokeStyle = 'rgba(221,214,195,.05)'; c.lineWidth = 1;
+  for (let i = -8; i <= 8; i++) { c.beginPath(); c.moveTo(w / 2 + i * 22, hh * .62); c.lineTo(w / 2 + i * 90, hh); c.stroke(); }
+  for (let j = 0; j < 5; j++) { const y = hh * .62 + (hh * .38) * (j / 5) ** 1.6; c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke(); }
+  const g = c.createRadialGradient(w / 2, hh * .45, 10, w / 2, hh * .45, 200); g.addColorStop(0, col + '30'); g.addColorStop(1, col + '00');
+  c.fillStyle = g; c.fillRect(0, 0, w, hh);
+  drawGhost(c, w / 2, hh * .43, 140, p.fx, t);
+  drawParts(c);
+  c.textAlign = 'center'; c.fillStyle = '#ddd6c3'; c.font = 'italic 22px "IM Fell English", Georgia, serif';
+  c.fillText(`“${p.name || 'your name here'}”`, w / 2, hh - 62);
+  c.fillStyle = '#8b8676'; c.font = `${Math.round(Math.max(11, 12 * w / (hcv.clientWidth || w)))}px ${MONO}`;
+  c.fillText(`${ORIGINS[p.origin].name} · ${COSMETICS[p.fx].name} · as others will see you`.toUpperCase(), w / 2, hh - 36, w - 24);
+}
+function frame(t) {
+  requestAnimationFrame(frame);
+  if (!$('#scr-run').hidden && G?.grid) drawRoom(t);
+  else if (!$('#scr-title').hidden) drawHero(t);
+}
+
+/* ============ input + flow ============ */
+const KEYS = { ArrowUp: [0, -1], w: [0, -1], k: [0, -1], ArrowDown: [0, 1], s: [0, 1], j: [0, 1], ArrowLeft: [-1, 0], a: [-1, 0], h: [-1, 0], ArrowRight: [1, 0], d: [1, 0], l: [1, 0], ' ': [0, 0], '.': [0, 0] };
+addEventListener('keydown', e => {
+  if (!G || $('#scr-run').hidden || !$('#modal').hidden || e.target.tagName === 'INPUT' || e.metaKey || e.ctrlKey || e.altKey) return;
+  const d = KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+  if (d) { e.preventDefault(); playerAct(...d); }
+});
+cv.addEventListener('click', e => {
+  if (!G || G.lock || G.over) return;
+  const r = cv.getBoundingClientRect(), tx = Math.floor((e.clientX - r.left) / r.width * W), ty = Math.floor((e.clientY - r.top) / r.height * H);
+  const dx = tx - G.p.x, dy = ty - G.p.y;
+  if (!dx && !dy) return playerAct(0, 0);
+  if (Math.abs(dx) + Math.abs(dy) === 1) return playerAct(dx, dy);
+  const s = stepToward(G.p, { x: tx, y: ty }); if (s) playerAct(...s);
+});
+document.querySelectorAll('.pad button').forEach(b => b.addEventListener('click', () => playerAct(...b.dataset.d.split(',').map(Number))));
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => { TAB = b.dataset.tab; renderBoard(); }));
+$('#in-name').addEventListener('input', e => { Store.profile.name = e.target.value.trim().slice(0, 18); });
+$('#in-name').addEventListener('change', () => Store.saveProfile());
+$('#btn-start').addEventListener('click', startRun);
+$('#btn-abandon').addEventListener('click', () => {
+  if (!G || G.over) return;
+  modal(h('h2', {}, 'Give up the run?'), h('p', { class: 'muted' }, 'You lie down in the dark. Your echo stays where you fell.'),
+    choices(choice('Keep going', '', () => {}), choice('Let the loop keep me', 'Ends the run and leaves your echo here.', () => die('their own weariness'))));
+});
+function show(which) { $('#scr-title').hidden = which !== 'title'; $('#scr-run').hidden = which !== 'run'; if (!TEST) scrollTo(0, 0); }
+function startRun() {
+  const p = Store.profile;
+  p.name = ($('#in-name').value.trim() || pick(['Nameless', 'Someone', 'The Unrecorded'])).slice(0, 18);
+  Store.saveProfile(); newRun(); show('run'); hud();
+  storyModal(FLOORS[0].name, [FLOORS[0].intro], 'Descend', () => enterRoom('fight'));
+}
+function toTitle() { G = null; show('title'); runSettlement(); renderTitle(); }
+
+let TEST = false;
+async function boot() {
+  $('#c-net').textContent = 'Finding the loop…';
+  renderBoard();
+  Store.onChange = () => { runSettlement(); if (!$('#scr-title').hidden) renderTitle(); };
+  await Store.init();
+  runSettlement(); renderTitle();
+  if (location.hash === '#selftest') selfTest();
+}
+requestAnimationFrame(frame);
+boot();
+
+/* ============ self-test: open with #selftest ============ */
+function selfTest() {
+  TEST = true; CLEAR_DELAY = 0; Store.mode = 'test'; // nothing persists from here on
+  const out = [], ok = (c, m) => out.push((c ? 'ok   ' : 'FAIL ') + m);
+  ok(weekKey(Date.UTC(2026, 0, 1)) === '2026-W01', 'ISO week of 2026-01-01');
+  ok(weekKey(Date.UTC(2024, 11, 30)) === '2025-W01', 'ISO week rolls into next year');
+  ok(weekKey(Date.UTC(2027, 0, 1)) === '2026-W53', '2027-01-01 belongs to 2026-W53');
+  const day = Date.UTC(2026, 8, 20, 10), me = 'me', E = (o, t, ts, by, e = 'x') => ({ e, o, n: 'X', f: 2, t, ts, by });
+  const logs = { a: Array.from({ length: 7 }, (_, i) => E(me, 'r', day + i, 'A')), b: [E(me, 'd', day + 50, 'B'), E('other', 'r', day + 60, 'B', 'y')], [me]: [E(me, 'r', day + 70, 'Me')] };
+  const s = settle({ ...newProfile(), seenTs: 0 }, logs, me);
+  ok(s.gained === DAILY_RECRUIT_CAP * RECRUIT_REWARD, `recruit rewards capped per day (got ${s.gained})`);
+  ok(s.capped === 2 && s.self === 1, 'over-cap and self recruits are counted but unpaid');
+  ok(s.count === 9 && s.seenTs === day + 70, 'only my echoes notify; seen marker advances');
+  ok(s.groups.x.r === 8 && s.groups.x.d === 1, 'notification groups recruits and defeats per echo');
+  const again = { ...newProfile(), seenTs: s.seenTs, ledger: s.ledger };
+  ok(settle(again, logs, me).count === 0, 'no double notifications');
+  ok(settle(again, { c: [E(me, 'r', day + 864e5, 'C')] }, me).gained === RECRUIT_REWARD, 'cap resets the next UTC day');
+  const L = LEGENDS[0];
+  ok(bestRelic(L, []) === L.echoRelic, 'defeating an echo yields its echo-only relic first');
+  ok(bestRelic(L, [L.echoRelic]) === 'fang', 'then its rarest relic you lack');
+  ok(LOOT.every(k => RELICS[k].r !== 'echo'), 'echo relics never appear in normal loot');
+  const tb = tally({ q: [E('o', 'r', Date.now(), 'Q', 'z'), E('o', 'r', Date.now() - 30 * 864e5, 'Q', 'z')] }, x => weekKey(x.ts) === weekKey());
+  ok(tb.z.r === 1, 'weekly board ignores older weeks');
+  const before = Store.myEchoes().length;
+  const stats = { runs: 0, deaths: 0, wins: 0, floors: [], recruits: 0, fights: 0, overlaps: 0, errors: 0, stuck: 0 };
+  for (; stats.runs < 12; stats.runs++) {
+    Store.profile.origin = Object.keys(ORIGINS)[stats.runs % 3];
+    try {
+      startRun();
+      let i = 0;
+      for (; i < 6000 && G && !G.over; i++) {
+        const btns = [...document.querySelectorAll('#modal:not([hidden]) .choice')];
+        if (btns.length) {
+          const txt = btns.map(b => b.textContent);
+          const want = btns.findIndex(b => /^(Recruit|Fight)/.test(b.textContent) && (stats.runs % 2 ? /^Recruit/ : /^Fight/).test(b.textContent));
+          const b = btns[want >= 0 ? want : Math.floor(Math.random() * btns.length)];
+          if (/^Recruit/.test(b.textContent)) stats.recruits++; if (/^Fight it/.test(b.textContent)) stats.fights++;
+          if (/Let the loop/.test(txt.join())) { btns[0].click(); continue; }
+          b.click(); continue;
+        }
+        const foes = G.ents.filter(e => e.kind === 'enemy');
+        if (!foes.length) { playerAct(0, 0); continue; }
+        const tgt = foes.reduce((a, b) => dist(G.p, b) < dist(G.p, a) ? b : a);
+        if (adj(G.p, tgt)) playerAct(tgt.x - G.p.x, tgt.y - G.p.y); else playerAct(...(stepToward(G.p, tgt) || [0, 0]));
+        const seen = new Set();
+        for (const e of G.ents) if (e.hp > 0) { const k = e.x + ',' + e.y; if (seen.has(k) || wall(e.x, e.y)) stats.overlaps++; seen.add(k); }
+      }
+      if (G && !G.over) stats.stuck++;
+      if (G) { stats.floors.push(G.floor + 1); G.p.hp > 0 && G.over ? stats.wins++ : stats.deaths++; }
+      document.querySelector('#modal:not([hidden]) .choice')?.click();
+    } catch (err) { stats.errors++; out.push('FAIL run threw: ' + (err.stack || err)); G = null; closeModal(); }
+  }
+  ok(stats.errors === 0 && stats.overlaps === 0 && stats.stuck === 0, `bot played ${stats.runs} runs: ${JSON.stringify(stats)}`);
+  ok(Store.myEchoes().length === Math.min(ECHOES_PER_PLAYER, before + stats.deaths), 'each death leaves an echo; only the newest stay');
+  ok(stats.recruits > 0 && stats.fights > 0, 'bot met echoes and both fought and recruited');
+  ok(!(window.__errs || []).length, 'no uncaught errors: ' + (window.__errs || []).join(' | '));
+  const fails = out.filter(l => l.startsWith('FAIL')).length;
+  document.title = fails ? `SELFTEST FAIL (${fails})` : 'SELFTEST PASS';
+  document.body.append(h('pre', { id: 'selftest', style: 'white-space:pre-wrap;font-size:11px' }, out.join('\n')));
+  console.log(out.join('\n'));
+}
+</script>
+
+</html>

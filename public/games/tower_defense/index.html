@@ -1,0 +1,219 @@
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wormhold</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Luckiest+Guy&display=swap">
+<style>
+  /* ponytail: single committed look (dusk battlefield), no light theme */
+  :root {
+    color-scheme: dark;
+    --soil: #16100c;
+    --crate: #2c2017;
+    --crate-hi: #3a2a1e;
+    --edge: #57402c;
+    --paper: #f8eedb;
+    --muted: #bca78b;
+    --fuse: #ff9a1f;
+    --fuse-deep: #c9580a;
+    --pink: #ff8fb8;
+    --grass: #8fd14f;
+    --gold: #ffd23f;
+    --blood: #e5484d;
+    --display: "Luckiest Guy", "Arial Black", Impact, sans-serif;
+    --ui: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--soil); color: var(--paper); font-family: var(--ui); overflow: hidden; -webkit-tap-highlight-color: transparent; }
+  #app { height: 100vh; height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: max(8px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  #stage { position: relative; border-radius: 12px; overflow: hidden; background: #0b0a10; box-shadow: 0 0 0 2px var(--edge), 0 18px 50px rgba(0,0,0,.55); max-width: 100%; }
+  #game { display: block; touch-action: none; cursor: crosshair; } /* layout() sets its CSS size */
+
+  button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+  button:focus-visible, .slot:focus-visible { outline: 3px solid var(--fuse); outline-offset: 2px; }
+  .btn { border: 0; border-radius: 10px; padding: .55em 1.1em; font-weight: 600; letter-spacing: .02em; transition: transform .08s, filter .15s; }
+  .btn:active { transform: translateY(1px) scale(.98); }
+  .btn.primary { background: linear-gradient(180deg, #ffb347, var(--fuse) 55%, var(--fuse-deep)); color: #2a1406; box-shadow: 0 3px 0 #7a3405, 0 6px 14px rgba(0,0,0,.35); }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.ghost { background: rgba(22,16,12,.75); border: 2px solid var(--edge); }
+  .btn.ghost:hover { border-color: var(--muted); }
+  .btn.big { font-family: var(--display); font-size: 1.35rem; font-weight: 400; padding: .6em 1.4em .45em; letter-spacing: .04em; }
+  .btn:disabled { filter: grayscale(1) brightness(.7); cursor: not-allowed; }
+
+  /* HUD over the canvas */
+  #hud { position: absolute; inset: 0 0 auto 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: clamp(4px, 1.2vw, 10px); pointer-events: none; font-size: clamp(10px, 1.25vw, 15px); }
+  #hud button { pointer-events: auto; }
+  .hud-side { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .hud-side.right { justify-content: flex-end; }
+  .chip { display: flex; align-items: center; gap: .45em; background: rgba(20,14,10,.72); border: 1.5px solid rgba(255,238,210,.14); border-radius: 999px; padding: .3em .8em; backdrop-filter: blur(4px); white-space: nowrap; }
+  .chip b { font-weight: 700; font-variant-numeric: tabular-nums; }
+  #wave-num { font-family: var(--display); font-weight: 400; letter-spacing: .05em; color: var(--gold); }
+  #wave-sub { color: var(--muted); }
+  .coin { width: .95em; height: .95em; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6b8, var(--gold) 45%, #b8860b); box-shadow: 0 0 0 1.5px #7a5a06; }
+  .wind-gauge { position: relative; width: 5.5em; height: .55em; border-radius: 99px; background: rgba(255,255,255,.12); overflow: hidden; }
+  .wind-gauge::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 2px; background: var(--paper); opacity: .6; }
+  .wind-gauge i { position: absolute; top: 0; bottom: 0; background: linear-gradient(90deg, #7fd3ff, #d5f1ff); }
+  #wind-l { right: 50%; background: linear-gradient(270deg, #7fd3ff, #d5f1ff); }
+  #wind-r { left: 50%; }
+  .fort { display: grid; gap: 3px; min-width: min(34vw, 260px); }
+  .fort-label { display: flex; justify-content: space-between; font-weight: 600; text-shadow: 0 1px 2px #000; }
+  .fort-bar { height: .8em; border-radius: 99px; background: rgba(0,0,0,.55); border: 1.5px solid rgba(255,238,210,.25); overflow: hidden; }
+  #fort-fill { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #ff5c8a, var(--pink)); transition: width .25s; }
+  .icon-btn { width: 2.2em; height: 2.2em; border-radius: 50%; border: 1.5px solid rgba(255,238,210,.2); background: rgba(20,14,10,.72); display: grid; place-items: center; font-size: 1em; line-height: 1; }
+  .icon-btn:hover { border-color: var(--muted); }
+
+  #prep-bar, #place-bar { position: absolute; left: 50%; bottom: 7%; transform: translateX(-50%); display: flex; gap: 10px; font-size: clamp(11px, 1.4vw, 16px); }
+  #place-bar { left: 1.5%; transform: none; } /* over the fort, where turrets can't go anyway */
+
+  /* ammo belt */
+  #belt { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+  .slot { position: relative; width: clamp(34px, 5.2vw, 64px); aspect-ratio: 1; max-width: 100%; border-radius: 10px; border: 2px solid var(--edge); background: linear-gradient(180deg, var(--crate-hi), var(--crate)); padding: 0; display: grid; place-items: center; transition: transform .1s, border-color .15s, box-shadow .15s; }
+  .slot canvas { width: 72%; height: 72%; }
+  @media (hover: hover) { .slot:hover { transform: translateY(-2px); } }
+  .slot.on { border-color: var(--pink); box-shadow: 0 0 0 2px rgba(255,143,184,.35), 0 0 18px rgba(255,143,184,.35); transform: translateY(-3px); }
+  .slot.empty canvas { filter: grayscale(1); opacity: .35; }
+  .slot .key { position: absolute; top: 2px; left: 5px; font-size: clamp(8px, .9vw, 11px); color: var(--muted); font-weight: 600; }
+  .slot .count { position: absolute; bottom: 1px; right: 4px; font-size: clamp(9px, 1vw, 13px); font-weight: 700; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
+  .slot.empty .count { color: var(--blood); }
+  .slot .cd { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.45); pointer-events: none; }
+  #weapon-info { margin: 0; min-height: 1.3em; font-size: clamp(11px, 1.2vw, 14px); color: var(--muted); text-align: center; }
+  #weapon-info b { color: var(--paper); font-weight: 600; }
+
+  /* overlays */
+  .overlay { position: fixed; inset: 0; display: grid; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); background: radial-gradient(ellipse at 50% 30%, rgba(40,26,16,.72), rgba(8,6,4,.9)); overflow: auto; z-index: 10; }
+  .panel { margin: auto; width: min(720px, 100%); box-sizing: border-box; background: linear-gradient(180deg, #33251a, #22180f); border: 2px solid var(--edge); border-radius: 16px; padding: clamp(16px, 3vw, 28px); box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  .logo { font-family: var(--display); font-weight: 400; font-size: clamp(3rem, 11vw, 6rem); line-height: .9; margin: 0; letter-spacing: .02em; color: var(--pink); text-shadow: 0 4px 0 #8a2d52, 0 8px 0 rgba(0,0,0,.4); text-wrap: balance; }
+  .logo.small { font-size: clamp(2rem, 7vw, 3.4rem); color: var(--fuse); text-shadow: 0 4px 0 #7a3405; }
+  .title-panel { text-align: center; display: grid; gap: 16px; justify-items: center; }
+  .tagline { margin: 0; max-width: 46ch; font-size: 1.1rem; line-height: 1.45; color: var(--paper); }
+  .howto { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px 18px; width: 100%; text-align: left; color: var(--muted); font-size: .95rem; }
+  .howto li { display: flex; gap: 8px; align-items: baseline; }
+  kbd { font-family: var(--ui); font-weight: 600; font-size: .85em; color: var(--paper); background: var(--crate-hi); border: 1.5px solid var(--edge); border-bottom-width: 3px; border-radius: 6px; padding: 0 .45em; white-space: nowrap; }
+  .muted { color: var(--muted); margin: 0; }
+
+  .armory-panel { display: grid; gap: 14px; width: min(860px, 100%); }
+  .armory-panel > header, .armory-panel > footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .armory-panel h2 { font-family: var(--display); font-weight: 400; font-size: clamp(1.8rem, 5vw, 2.6rem); margin: 0; color: var(--gold); letter-spacing: .03em; }
+  .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .item { display: grid; grid-template-columns: 44px 1fr; grid-template-rows: auto 1fr auto; column-gap: 10px; row-gap: 4px; background: rgba(0,0,0,.22); border: 1.5px solid rgba(255,238,210,.1); border-radius: 12px; padding: 10px; }
+  .item canvas { grid-row: 1 / 3; width: 44px; height: 44px; }
+  .item h3 { margin: 0; font-size: 1rem; font-weight: 600; display: flex; justify-content: space-between; gap: 6px; }
+  .item h3 small { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .item p { margin: 0; font-size: .85rem; color: var(--muted); line-height: 1.35; }
+  .item .btn { grid-column: 1 / -1; font-size: .9rem; padding: .45em .8em; display: flex; justify-content: center; gap: .5em; align-items: center; }
+  .item .btn .coin { display: inline-block; }
+  .over-panel { text-align: center; display: grid; gap: 14px; justify-items: center; }
+  #over-stats { margin: 0; font-size: 1.1rem; line-height: 1.6; }
+  #over-stats b { color: var(--gold); font-variant-numeric: tabular-nums; }
+  .stage-overlay { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 12px; background: rgba(8,6,4,.55); font-family: var(--display); font-size: clamp(1.6rem, 5vw, 3rem); letter-spacing: .05em; }
+
+  .rotate-hint { display: none !important; }
+
+  /* touch screens (and phone-width portrait): 44px targets, 12px floor on text, no keyboard hints on the belt */
+  @media (pointer: coarse), (orientation: portrait) and (max-width: 600px) {
+    #hud { font-size: clamp(12px, 1.25vw, 15px); }
+    .icon-btn { width: 44px; height: 44px; font-size: 16px; }
+    .btn { min-height: 44px; }
+    #prep-bar, #place-bar, #weapon-info { font-size: clamp(12px, 1.4vw, 16px); }
+    .slot { width: clamp(44px, 5.2vw, 64px); }
+    .slot .key { display: none; }
+    .slot .count { font-size: 12px; }
+  }
+  /* phone portrait: HUD becomes a header strip above the battlefield, bigger belt slots */
+  @media (orientation: portrait) and (max-width: 600px) {
+    #stage { display: flex; flex-direction: column; }
+    #hud { position: static; order: -1; flex-wrap: wrap; justify-content: center; font-size: 12px; padding: 6px; }
+    .fort { flex: 1 1 100%; order: 1; }
+    .slot { width: clamp(44px, 16vw, 64px); }
+    .rotate-hint { display: flex !important; }
+  }
+  /* short landscape (phones): belt and ammo info beside the battlefield */
+  @media (orientation: landscape) and (max-height: 540px) {
+    #app { display: grid; grid-template-areas: "stage belt" "stage info"; align-content: center; justify-content: center; gap: 6px 10px; }
+    #stage { grid-area: stage; }
+    #belt { grid-area: belt; display: grid; grid-template-columns: repeat(2, auto); align-self: end; }
+    #weapon-info { grid-area: info; width: 0; min-width: 100%; text-align: left; line-height: 1.35; }
+    .logo { font-size: 3.2rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) { .btn, .slot, #fort-fill { transition: none; } }
+</style>
+
+<main id="app">
+  <div id="stage">
+    <canvas id="game" aria-label="Battlefield. Aim with the pointer, hold to charge, release to fire."></canvas>
+    <header id="hud">
+      <div class="hud-side">
+        <div class="chip"><b id="wave-num">Wave 1</b><span id="wave-sub">Dig in</span></div>
+      </div>
+      <div class="fort" aria-label="Fort health">
+        <div class="fort-label"><span>Fort</span><span id="fort-text">100 / 100</span></div>
+        <div class="fort-bar"><i id="fort-fill"></i></div>
+      </div>
+      <div class="hud-side right">
+        <div class="chip"><span class="coin" aria-hidden="true"></span><b id="coins">0</b></div>
+        <div class="chip" title="Wind pushes rockets, airstrikes and napalm"><span>Wind</span><div class="wind-gauge"><i id="wind-l"></i><i id="wind-r"></i></div></div>
+        <button id="btn-mute" class="icon-btn" aria-label="Mute sound" title="Mute (M)">♪</button>
+        <button id="btn-pause" class="icon-btn" aria-label="Pause" title="Pause (P)">❚❚</button>
+      </div>
+    </header>
+    <div id="prep-bar" hidden>
+      <button id="btn-armory" class="btn ghost">Armory</button>
+      <button id="btn-start" class="btn primary">Start wave 1 ▸</button>
+    </div>
+    <div id="place-bar" hidden>
+      <button id="btn-cancel" class="btn ghost">Cancel</button>
+    </div>
+    <div id="pause-screen" class="stage-overlay" hidden>
+      Paused
+      <button id="btn-resume" class="btn primary">Resume</button>
+    </div>
+  </div>
+  <nav id="belt" aria-label="Ammunition"></nav>
+  <p id="weapon-info"></p>
+</main>
+
+<section id="title-screen" class="overlay">
+  <div class="panel title-panel">
+    <h1 class="logo">Wormhold</h1>
+    <p class="tagline">The grub legion is crawling up your hill. You have one stone fort, one pink worm and a crate full of terrible ideas.</p>
+    <ul class="howto">
+      <li><kbd>Aim</kbd> point or touch anywhere on the battlefield</li>
+      <li><kbd>Hold</kbd> charge power, drag to aim, release to fire</li>
+      <li><kbd>1</kbd>–<kbd>0</kbd>, wheel or tap the belt: switch ammo</li>
+      <li><kbd>Space</kbd> <kbd>←</kbd><kbd>→</kbd> fire &amp; aim by keyboard</li>
+      <li>Blow the hill open down to the water. Worms can't swim.</li>
+      <li>Between waves: dig trenches, lay mines, build sentries.</li>
+      <li class="rotate-hint">Turn your phone sideways for a bigger battlefield.</li>
+    </ul>
+    <button id="btn-play" class="btn primary big">Defend the hill</button>
+    <p id="best-line" class="muted"></p>
+  </div>
+</section>
+
+<section id="armory" class="overlay" hidden>
+  <div class="panel armory-panel">
+    <header>
+      <h2>Armory</h2>
+      <div class="chip"><span class="coin" aria-hidden="true"></span><b id="armory-coins">0</b></div>
+    </header>
+    <div id="shop-grid" class="shop-grid"></div>
+    <footer>
+      <button id="btn-close-armory" class="btn ghost">Back to the hill</button>
+      <button id="btn-start-2" class="btn primary">Start wave ▸</button>
+    </footer>
+  </div>
+</section>
+
+<section id="over-screen" class="overlay" hidden>
+  <div class="panel over-panel">
+    <h2 class="logo small">The fort has fallen</h2>
+    <p id="over-stats"></p>
+    <button id="btn-again" class="btn primary big">Dig in again</button>
+  </div>
+</section>
+
+<script src="js/core.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/weapons.js"></script>
+<script src="js/game.js"></script>

@@ -1,65 +1,99 @@
-import Image from "next/image";
+import Link from "next/link";
+import { games } from "./games";
+import { CLOUD, FLOWER, Pixels, SPROUT, SUN } from "./pixels";
+
+const sky = { Y: "#ffd23f", O: "#f08a24", W: "#fff6c9" };
+const cloud = { W: "#fffdf5", S: "#d7ecef" };
+const sprout = { L: "#7cc15a", G: "#3f7d2e" };
+const flowers = ["#e0457b", "#f4e27a", "#ffffff", "#e9a93b"];
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <>
+      <header className="hero">
+        <Pixels art={SUN} palette={sky} scale={9} className="sun" />
+        <Pixels art={CLOUD} palette={cloud} scale={7} className="cloud cloud-a" />
+        <Pixels art={CLOUD} palette={cloud} scale={5} className="cloud cloud-b" />
+
+        <div className="hero-copy">
+          <p className="pixel-tag">Est. 2026 · {games.length} varieties in stock</p>
+          <h1 className="wordmark">
+            Game<em>Garden</em>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="hero-lede">
+            A small plot of hand-grown browser games. Pick a seed packet, plant it,
+            and play. No installs, no ads, no weeds.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
+          <a href="#rack" className="dig-btn">
+            Start digging ▾
           </a>
         </div>
+
+        <div className="hill" aria-hidden>
+          <div className="flowerbed">
+            {Array.from({ length: 14 }, (_, i) => (
+              <Pixels
+                key={i}
+                art={FLOWER}
+                palette={{ P: flowers[i % flowers.length], Y: "#f08a24", G: "#3f7d2e", L: "#7cc15a" }}
+                scale={5}
+                className="flower"
+              />
+            ))}
+          </div>
+        </div>
+      </header>
+
+      <main id="rack" className="soil">
+        <div className="rack-head">
+          <h2 className="pixel-tag sun-ink">▸ The seed rack</h2>
+          <p>Every packet is a whole game in a single page. Tap one to plant it.</p>
+        </div>
+
+        <ul className="rack">
+          {games.map((g, i) => (
+            <li key={g.slug} style={{ "--i": i } as React.CSSProperties}>
+              <Link
+                href={`/play/${g.slug}`}
+                className="packet"
+                style={
+                  {
+                    "--paper": g.colors.paper,
+                    "--ink": g.colors.ink,
+                    "--accent": g.colors.accent,
+                  } as React.CSSProperties
+                }
+              >
+                <Pixels art={SPROUT} palette={sprout} scale={6} className="packet-sprout" />
+                <span className="packet-perf">
+                  GameGarden Seed Co. <span>No. {String(i + 1).padStart(2, "0")}</span>
+                </span>
+                <span className="packet-art">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- static screenshot, no optimisation needed */}
+                  <img src={`/shots/${g.slug}.jpg`} alt="" loading="lazy" />
+                </span>
+                <span className="packet-title">{g.title}</span>
+                <span className="packet-variety">{g.variety}</span>
+                <span className="packet-blurb">{g.blurb}</span>
+                <span className="packet-facts">
+                  <span>
+                    <b>Sprouts in</b> {g.sprouts}
+                  </span>
+                  <span>
+                    <b>Type</b> {g.tags.join(" · ")}
+                  </span>
+                </span>
+                <span className="packet-cta">Plant + play ▸</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </main>
-    </div>
+
+      <footer className="footer">
+        <span className="pixel-tag">GameGarden</span>
+        <span>Grown slowly, played quickly.</span>
+      </footer>
+    </>
   );
 }

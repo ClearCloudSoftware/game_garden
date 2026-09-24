@@ -1,0 +1,1426 @@
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Long Night of Hollowmere</title>
+<meta name="description" content="A single-page siege RPG: keep the lanterns lit, find the lens shards and relight the lighthouse before the night swallows Hollowmere.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Spectral:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --ink:#0a0e18; --ink2:#111827; --sea:#16263d; --line:#2a3550;
+  --amber:#f2b441; --ember:#e0564b; --tide:#4fc3b5; --parch:#ebe2c9; --mute:#8e96ab; --dim:#5d6680;
+  --glass:rgba(10,14,24,.78);
+  --f-disp:"IM Fell English SC","IM Fell English",Georgia,"Times New Roman",serif;
+  --f-fell:"IM Fell English",Georgia,serif;
+  --f-body:"Spectral",Georgia,serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+html,body{height:100%;margin:0}
+[hidden]{display:none!important}
+body{background:var(--ink);color:var(--parch);font:15px/1.5 var(--f-body);overflow:hidden;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+#cv,#mini,#bar,#homecv{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.panel{background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.lbl{font:600 10px/1.2 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.btn{background:transparent;border:1px solid var(--amber);color:var(--amber);padding:.55em 1.1em;font:600 12px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase}
+.btn:hover{background:rgba(242,180,65,.12)}
+.btn.ghost{border-color:var(--line);color:var(--parch)}
+.btn.big{font-size:14px;padding:.9em 1.6em}
+.c-craft{color:var(--amber)}.c-combat{color:var(--ember)}.c-explore{color:var(--tide)}
+/* ---------- HUD ---------- */
+#hud{position:fixed;inset:0;pointer-events:none;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(10px + env(safe-area-inset-bottom,0px))}
+#hud>*{pointer-events:auto}
+#top{position:absolute;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(560px,calc(100% - 24px));padding:10px 14px 12px;display:grid;gap:6px}
+#phaseRow{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+#phase{font:18px/1.1 var(--f-disp);color:var(--parch);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tier{font:600 10px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;padding:4px 6px;border:1px solid currentColor;white-space:nowrap}
+#dawnbar{position:relative;height:12px;background:#060910;border:1px solid var(--line);display:flex;overflow:hidden}
+#dawnbar i{display:block;height:100%;transition:width .4s}
+#seg-craft{background:var(--amber)}#seg-combat{background:var(--ember)}#seg-explore{background:var(--tide)}
+#dawnbar b{position:absolute;top:-1px;bottom:-1px;width:1px;background:var(--parch);opacity:.6}
+#dawnRow{display:flex;justify-content:space-between;gap:8px;font:11px/1.2 var(--f-mono);color:var(--mute)}
+#dawnRow strong{color:var(--parch);font-weight:600}
+#pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pil{display:grid;gap:3px}
+.pil .lbl{display:flex;justify-content:space-between}
+.pbar{position:relative;height:4px;background:#060910}
+.pbar i{position:absolute;left:0;top:0;bottom:0;transition:width .4s}
+.pil.held .lbl span:last-child::after{content:" · held"}
+#me{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));top:calc(10px + env(safe-area-inset-top,0px));width:220px;padding:10px 12px;display:grid;gap:6px}
+#meName{font:19px/1 var(--f-disp)}
+#meTitle{font:italic 12px/1.2 var(--f-fell);color:var(--mute)}
+.hp{height:6px;background:#060910;border:1px solid var(--line)}
+.hp i{display:block;height:100%;background:linear-gradient(90deg,#9b2f2a,var(--ember));transition:width .2s}
+#bag{display:flex;flex-wrap:wrap;gap:6px 10px;font:12px/1.2 var(--f-mono);color:var(--parch)}
+#bag span{white-space:nowrap}
+#srv{position:absolute;right:calc(12px + env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px));width:196px;padding:8px;display:grid;gap:6px}
+#mini{width:180px;height:124px;display:block;cursor:pointer;background:#060910}
+#srvInfo{font:11px/1.35 var(--f-mono);color:var(--mute)}
+#srvInfo strong{color:var(--parch)}
+#track{position:absolute;right:calc(12px + env(safe-area-inset-right,0px));top:calc(206px + env(safe-area-inset-top,0px));width:196px;padding:10px 12px;display:grid;gap:6px;font-size:13px;line-height:1.35}
+#track h3{margin:0;font:600 10px/1.2 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+#track ul{margin:0;padding:0;list-style:none;display:grid;gap:5px}
+#track li.warn,#jObj li.warn{color:var(--ember)}
+#track li.done,#jObj li.done{color:var(--dim);text-decoration:line-through}
+#chat{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));width:min(380px,calc(100% - 24px));display:grid;grid-template-rows:auto auto}
+#log{height:150px;overflow-y:auto;padding:8px 10px;font-size:12.5px;line-height:1.4;display:flex;flex-direction:column;gap:2px;scrollbar-width:thin}
+#log p{margin:0}
+#log .sys{color:var(--amber);font-style:italic}
+#log .lore{color:#c9b6e4;font-style:italic}
+#log .who{font-weight:600}
+#chatf{display:flex;border-top:1px solid var(--line);margin:0}
+#chatin{flex:1;min-width:0;background:transparent;border:0;color:var(--parch);padding:7px 10px;font:13px var(--f-body)}
+#chatin::placeholder{color:var(--dim)}
+#bar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;width:max-content}
+.hk{position:relative;min-width:62px;height:62px;padding:4px 6px;background:var(--glass);border:1px solid var(--line);display:grid;place-items:center;text-align:center;overflow:hidden}
+.hk:hover{border-color:var(--amber)}
+.hk .k{position:absolute;left:4px;top:3px;font:600 10px var(--f-mono);color:var(--mute)}
+.hk .n{font:12px/1.1 var(--f-fell);padding-top:8px}
+.hk .cd{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.65);height:0}
+.hk .cdt{position:absolute;inset:0;display:grid;place-items:center;font:600 14px var(--f-mono);color:var(--parch)}
+#toast{position:absolute;left:50%;top:calc(150px + env(safe-area-inset-top,0px));transform:translateX(-50%);text-align:center;pointer-events:none;font:20px/1.25 var(--f-disp);color:var(--parch);text-shadow:0 2px 12px #000;width:min(640px,calc(100% - 24px));transition:opacity .5s}
+/* ---------- Overlays ---------- */
+.ov{position:fixed;inset:0;display:grid;place-items:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));background:rgba(4,6,12,.55);overflow-y:auto;z-index:5}
+.card{width:min(620px,100%);padding:22px 24px;display:grid;gap:14px;max-height:100%;overflow-y:auto}
+.card h2{margin:0;font:28px/1.1 var(--f-disp);text-wrap:balance}
+.card p{margin:0;max-width:62ch}
+.card .row{display:flex;flex-wrap:wrap;gap:8px}
+.quote{font:italic 17px/1.5 var(--f-fell);color:var(--parch);border-left:2px solid var(--amber);padding-left:14px}
+#dlg .who{display:flex;gap:12px;align-items:center}
+#dlg .face{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font:20px var(--f-disp);color:var(--ink)}
+#story h2{font-size:34px;color:var(--amber)}
+#story .quote{font-size:18px}
+#journal ol{margin:0;padding-left:1.2em;display:grid;gap:8px}
+#journal .sec{display:grid;gap:8px}
+/* ---------- Title ---------- */
+#title{place-items:start center;background:radial-gradient(ellipse at 70% 30%,rgba(242,180,65,.08),transparent 55%),rgba(4,6,12,.62)}
+#titleInner{width:min(980px,100%);display:grid;gap:22px;padding-block:18px 28px}
+#titleInner h1{margin:0;font:clamp(40px,7vw,86px)/.92 var(--f-disp);letter-spacing:.01em;color:var(--parch);text-wrap:balance}
+#titleInner h1 em{display:block;font:italic clamp(18px,2.6vw,26px)/1.2 var(--f-fell);color:var(--amber);margin-bottom:10px;letter-spacing:.02em}
+.lede{font:italic 19px/1.5 var(--f-fell);max-width:60ch;color:var(--parch)}
+.setup{display:grid;grid-template-columns:1.2fr .8fr;gap:22px;align-items:start}
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.role{background:var(--glass);border:1px solid var(--line);padding:14px;display:grid;gap:6px;text-align:left;align-content:start}
+.role[aria-pressed="true"]{border-color:currentColor;box-shadow:inset 0 0 0 1px currentColor}
+.role h3{margin:0;font:22px/1 var(--f-disp)}
+.role .t{font:italic 13px var(--f-fell);opacity:.85}
+.role p{margin:0;font-size:13px;color:var(--parch);line-height:1.4}
+.opts{display:grid;gap:12px;align-content:start}
+.field{display:grid;gap:6px}
+.field input{background:#060910;border:1px solid var(--line);color:var(--parch);padding:9px 10px;font:16px var(--f-body)}
+.seg{display:flex;border:1px solid var(--line)}
+.seg button{flex:1;background:transparent;border:0;padding:8px 6px;font:12px/1.2 var(--f-mono);color:var(--mute)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:rgba(242,180,65,.14);color:var(--amber)}
+.hint{font-size:12.5px;color:var(--mute);line-height:1.4}
+.keys{font:12px/1.6 var(--f-mono);color:var(--mute)}
+.keys b{color:var(--parch);font-weight:600}
+.monu{display:grid;gap:8px}
+.monu h3{margin:0;font:20px var(--f-disp)}
+.stone{border:1px solid var(--line);background:linear-gradient(180deg,rgba(40,48,68,.35),rgba(10,14,24,.4));padding:12px 14px;display:grid;gap:8px;max-height:260px;overflow-y:auto}
+.stone .e{display:grid;gap:2px;padding-bottom:8px;border-bottom:1px dashed var(--line);font-size:13px}
+.stone .e:last-child{border-bottom:0;padding-bottom:0}
+.stone .e strong{font:16px var(--f-disp);color:var(--parch)}
+.stone .e span{color:var(--mute)}
+/* ---------- End & home ---------- */
+#end .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+#end dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px}
+#end dt{color:var(--mute)}#end dd{margin:0;font-family:var(--f-mono)}
+.reward{border:1px solid var(--line);padding:12px;display:grid;gap:6px}
+.reward canvas{width:100%;height:auto;aspect-ratio:360/150;background:#05070d;display:block}
+#home{place-items:stretch;padding:0;background:#05070d}
+#homecv{width:100%;height:100%;display:block}
+#homeUI{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:10px;pointer-events:none}
+#homeUI>*{pointer-events:auto}
+#homeCap{max-width:560px;padding:12px 14px;font:italic 16px/1.45 var(--f-fell)}
+@media (max-width:860px){
+  .setup,#end .grid{grid-template-columns:1fr}
+  #track{display:none}
+  #me{width:200px;padding:8px 10px}
+  #meTitle{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #srv{width:auto}#mini{width:130px;height:90px}#srvInfo{display:none}
+  #top{top:calc(118px + env(safe-area-inset-top,0px))}
+  #toast{top:calc(252px + env(safe-area-inset-top,0px))}
+  #log{height:88px}
+  #chat{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .hk{min-width:54px;height:54px}
+}
+@media (max-width:560px){ .roles{grid-template-columns:1fr} .lbl,#tier{font-size:11px} #pillars .lbl{letter-spacing:0} .pil.held .lbl span:last-child::after{content:" ✓"} #phase{font-size:15px}
+  #dawnRow{flex-wrap:wrap;column-gap:14px;font-size:12px} #dawnRow span{white-space:nowrap} #toast{font-size:18px} }
+/* phone landscape: HUD hugs the edges so the middle of the map stays clear */
+@media (max-height:500px) and (orientation:landscape){
+  #me{width:170px} #meTitle{display:none}
+  #top{top:calc(10px + env(safe-area-inset-top,0px));width:calc(100% - 392px);padding:8px 12px}
+  #toast{top:calc(136px + env(safe-area-inset-top,0px));font-size:17px}
+  #log{height:56px}
+  #chat{bottom:calc(10px + env(safe-area-inset-bottom,0px));width:min(300px,calc(100% - 24px))}
+  #bar{left:auto;right:calc(12px + env(safe-area-inset-right,0px));transform:none;bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+}
+/* touch: no key hints on the action bar, finger-sized targets, no iOS zoom on focus */
+@media (hover:none) and (pointer:coarse){
+  .hk .k{display:none} .hk .n{padding-top:0}
+  .btn,.seg button,.field input{min-height:44px}
+  #chatin{min-height:44px;font-size:16px}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
+</style>
+
+<canvas id="cv" aria-label="The town of Hollowmere at night"></canvas>
+
+<div id="hud" hidden>
+  <section id="top" class="panel" aria-label="Dawn meter">
+    <div id="phaseRow"><div id="phase">The First Watch</div><div id="tier">Long Night</div></div>
+    <div id="dawnbar"><i id="seg-craft"></i><i id="seg-combat"></i><i id="seg-explore"></i><b style="left:33.33%"></b><b style="left:66.66%"></b></div>
+    <div id="dawnRow"><span>Dawn <strong id="dawnPct">0%</strong></span><span id="timer">4:00 until the night deepens</span><span id="clock">Hour 0</span></div>
+    <div id="pillars">
+      <div class="pil" id="pil-craft"><div class="lbl"><span class="c-craft">Craft</span><span class="num" id="pv-craft">0%</span></div><div class="pbar"><i id="pb-craft" style="background:var(--amber)"></i></div></div>
+      <div class="pil" id="pil-combat"><div class="lbl"><span class="c-combat">Combat</span><span class="num" id="pv-combat">0%</span></div><div class="pbar"><i id="pb-combat" style="background:var(--ember)"></i></div></div>
+      <div class="pil" id="pil-explore"><div class="lbl"><span class="c-explore">Explore</span><span class="num" id="pv-explore">0%</span></div><div class="pbar"><i id="pb-explore" style="background:var(--tide)"></i></div></div>
+    </div>
+  </section>
+  <section id="me" class="panel" aria-label="Your character">
+    <div id="meName">Wren</div>
+    <div id="meTitle">Crafter</div>
+    <div class="hp" aria-label="Health"><i id="hpFill"></i></div>
+    <div id="bag"></div>
+  </section>
+  <section id="srv" class="panel" aria-label="Server">
+    <canvas id="mini" width="180" height="124" aria-label="Map of Hollowmere. Tap or click to travel."></canvas>
+    <div id="srvInfo"></div>
+  </section>
+  <section id="track" class="panel" aria-label="Objectives"><h3>Objectives</h3><ul id="trackList"></ul></section>
+  <section id="chat" class="panel" aria-label="Server chat">
+    <div id="log" role="log" aria-live="polite"></div>
+    <form id="chatf" autocomplete="off"><input id="chatin" maxlength="120" placeholder="Say something to the server… (Enter)"></form>
+  </section>
+  <div id="bar" role="toolbar" aria-label="Actions">
+    <button class="hk" id="b-use" title="Attack or use the nearest thing (Space)"><span class="k">SPC</span><span class="n">Use</span></button>
+    <button class="hk" id="b-q"><span class="k">Q</span><span class="n"></span><span class="cd"></span><span class="cdt"></span></button>
+    <button class="hk" id="b-r"><span class="k">R</span><span class="n"></span><span class="cd"></span><span class="cdt"></span></button>
+    <button class="hk" id="b-j" title="Journal (J)"><span class="k">J</span><span class="n">Journal</span></button>
+    <button class="hk" id="b-m" title="Menu (Esc)"><span class="k">ESC</span><span class="n">Menu</span></button>
+  </div>
+  <div id="toast" aria-live="assertive"></div>
+</div>
+
+<div id="dlg" class="ov" hidden><div class="card panel" role="dialog" aria-modal="true" aria-labelledby="dlgName">
+  <div class="who"><div class="face" id="dlgFace">M</div><div><h2 id="dlgName">Maud</h2><div class="lbl" id="dlgRole">Innkeeper</div></div></div>
+  <div id="dlgBody" class="quote"></div>
+  <p id="dlgNote" class="hint"></p>
+  <div class="row" id="dlgBtns"></div>
+</div></div>
+
+<div id="story" class="ov" hidden><div class="card panel" role="dialog" aria-modal="true" aria-labelledby="storyT">
+  <div class="lbl" id="storyK">The truth, in stages</div>
+  <h2 id="storyT"></h2>
+  <div class="quote" id="storyB"></div>
+  <div class="row"><button class="btn" id="storyOk">Keep the light</button></div>
+</div></div>
+
+<div id="menu" class="ov" hidden><div class="card panel" role="dialog" aria-modal="true" aria-labelledby="menuT">
+  <h2 id="menuT">The night waits</h2>
+  <p class="hint">The server doesn't stop, but your part of it will hold while this is open.</p>
+  <div class="keys"><b>Click / tap</b> move, attack, gather, talk · <b>Hold</b> keep walking · <b>WASD</b> walk · <b>Space</b> use nearest · <b>Q R</b> abilities · <b>J</b> journal · <b>Enter</b> chat · <b>Esc</b> this menu · on touch, the action bar does the same</div>
+  <div class="row"><button class="btn" id="mResume">Resume</button><button class="btn ghost" id="mJournal">Journal</button><button class="btn ghost" id="mAbandon">Leave the siege</button></div>
+</div></div>
+
+<div id="journal" class="ov" hidden><div class="card panel" role="dialog" aria-modal="true" aria-labelledby="jT">
+  <h2 id="jT">Journal of the Long Night</h2>
+  <div class="sec"><div class="lbl">Objectives</div><ul id="jObj" style="margin:0;padding-left:1.2em;display:grid;gap:6px"></ul></div>
+  <div class="sec"><div class="lbl">What the dawn has shown</div><ol id="jTruth"></ol></div>
+  <div class="sec"><div class="lbl">How the town remembers Silas</div><div id="jNpc" class="hint"></div></div>
+  <div class="sec"><div class="lbl">Memories returned in glass</div><ol id="jMem"></ol></div>
+  <div class="row"><button class="btn" id="jClose">Close</button></div>
+</div></div>
+
+<div id="monuOv" class="ov" hidden><div class="card panel" role="dialog" aria-modal="true" aria-labelledby="moT">
+  <h2 id="moT">The Monument of the Long Night</h2>
+  <p class="hint" id="moSrc"></p>
+  <div class="stone" id="moList"></div>
+  <div class="row"><button class="btn" id="moClose">Close</button></div>
+</div></div>
+
+<div id="title" class="ov">
+  <div id="titleInner">
+    <h1><em>A server event in three watches</em>The Long Night of Hollowmere</h1>
+    <p class="lede">The sun was due at six. The clock in the Salt &amp; Wick says a quarter past forever. Silas Penhallow, keeper of the Hollowmere light, is gone, the lamp is dark, and nobody in town can agree on who he was.</p>
+    <div class="setup">
+      <div class="roles" id="roles" role="group" aria-label="Choose your role"></div>
+      <div class="opts">
+        <div class="field"><label class="lbl" for="nameIn">Your name</label><input id="nameIn" maxlength="16" value="Wren"></div>
+        <div class="field"><span class="lbl" id="popL">Server population</span>
+          <div class="seg" id="pop" role="group" aria-labelledby="popL">
+            <button data-p="5" aria-pressed="false">Quiet · 5</button><button data-p="12" aria-pressed="true">Lively · 12</button><button data-p="20" aria-pressed="false">Crowded · 20</button>
+          </div>
+          <span class="hint">Waves and the dawn meter scale to whoever is online, so a quiet server is harder alone but never hopeless.</span></div>
+        <div class="row"><button class="btn big" id="startBtn">Enter the Long Night</button><button class="btn ghost" id="homeBtn">Your home</button></div>
+        <div class="keys"><b>Click / tap</b> to move &amp; interact · <b>Hold</b> keep walking · <b>WASD</b> walk · <b>Space</b> use · <b>Q R</b> abilities · <b>J</b> journal</div>
+      </div>
+    </div>
+    <div class="monu"><h3>The Monument</h3><p class="hint" id="tSrc"></p><div class="stone" id="tMonu"></div></div>
+  </div>
+</div>
+
+<div id="end" class="ov" hidden><div class="card panel" style="width:min(820px,100%)" role="dialog" aria-modal="true" aria-labelledby="endT">
+  <div class="lbl" id="endK">The siege is over</div>
+  <h2 id="endT">Dawn over Hollowmere</h2>
+  <p id="endP" class="quote"></p>
+  <div class="grid">
+    <div class="reward"><div class="lbl">Siege record</div><dl id="endStats"></dl></div>
+    <div class="reward"><div class="lbl">Your rewards</div><div id="endTitle" style="font:22px/1.1 var(--f-disp)"></div><canvas id="endLamp" width="360" height="150"></canvas><div id="endLampT" class="hint"></div></div>
+  </div>
+  <div class="reward"><div class="lbl">Carved into the Monument</div><div id="endMonu" style="font:italic 16px/1.45 var(--f-fell)"></div></div>
+  <div class="row"><button class="btn" id="endHome">Carry the lantern home</button><button class="btn ghost" id="endAgain">Back to Hollowmere</button></div>
+</div></div>
+
+<div id="home" class="ov" hidden>
+  <canvas id="homecv" aria-label="Your home, lit by the lanterns you carried back"></canvas>
+  <div id="homeUI"><div id="homeCap" class="panel">Your cottage. Every lantern you carry home from the Long Night keeps the mood of the siege it came from. Tap one to remember.</div><button class="btn" id="homeBack">Back</button></div>
+</div>
+<script>
+"use strict";
+// ================= DATA =================
+const W = 3200, H = 2200, HOUR = 45, PHASE_HOURS = 4, KINDLE_TIME = 60;
+const REQ = 150;                 // dawn points per pillar per watch at 10 players online
+const ROLES = {
+  crafter:  { name:'Crafter',  title:'Lamplighter', color:'#f2b441', hp:115, spd:150, dmg:9,  range:52, pillar:'craft',
+    blurb:'Gather oil, glass and iron in the dark, then assemble lanterns that carve safe ground out of the night.',
+    q:{ name:'Flashpowder', cd:12 }, r:{ name:'Flare Lamp', cd:26 } },
+  fighter:  { name:'Fighter',  title:'Warden', color:'#e0564b', hp:175, spd:150, dmg:24, range:58, pillar:'combat',
+    blurb:'Hold the lanterns when the Gloam rises. Every zone you keep lit through a wave pushes the dawn closer.',
+    q:{ name:'Cleave', cd:5 }, r:{ name:'Warcry', cd:18 } },
+  explorer: { name:'Explorer', title:'Tidewalker', color:'#4fc3b5', hp:95,  spd:186, dmg:11, range:56, pillar:'explore',
+    blurb:'Only you can sense the lens shards glimmering in the dark. Carry them to the lighthouse before the dark eats them.',
+    q:{ name:'Dash', cd:4 }, r:{ name:'Seeker Flare', cd:20 } },
+};
+const PILLARS = ['craft','combat','explore'];
+const PNAME = { craft:'Craft', combat:'Combat', explore:'Explore' };
+const PCOL = { craft:'#f2b441', combat:'#e0564b', explore:'#4fc3b5' };
+const TIERS = [
+  { name:'The Long Night',    short:'Long Night',    mult:1,    reward:1,   gain:1,    dark:[7,10,22],  alpha:.88, flame:'#ffb347', lamp:'Amber Lantern',    prefix:'' },
+  { name:'The Deep Night',    short:'Deep Night',    mult:1.2, reward:1.6, gain:1.15, dark:[4,16,20],  alpha:.91, flame:'#5fe0c8', lamp:'Tidewater Lantern', prefix:'Deepnight' },
+  { name:'The Black Night',   short:'Black Night',   mult:1.4, reward:2.3, gain:1.3,  dark:[12,6,22],  alpha:.93, flame:'#b48cff', lamp:'Umbral Lantern',   prefix:'Blackwick' },
+  { name:'The Endless Night', short:'Endless Night', mult:1.6,  reward:3.2, gain:1.45, dark:[2,2,6],    alpha:.95, flame:'#e8f0ff', lamp:"Keeper's Lantern", prefix:'Endless' },
+];
+const WATCHES = ['', 'The First Watch · Kindle the streets', 'The Second Watch · Hold the light', 'The Last Watch · Relight the lighthouse'];
+const FOES = {
+  wisp:    { hp:22,  spd:160, dmg:5,  gnaw:1, r:8,  pts:1, cd:.8 },
+  hollow:  { hp:65,  spd:92,  dmg:10, gnaw:2, r:13, pts:2, cd:1.1 },
+  drowned: { hp:210, spd:64,  dmg:22, gnaw:5, r:20, pts:5, cd:1.6 },
+};
+const HEARTH = { x:960, y:1060, r:250 };
+const LIGHTHOUSE = { x:2905, y:790 };
+const MONUMENT = { x:880, y:1150 };
+const SITES = [
+  ['Hearth Road',1235,1010],['Inn Lane',1010,790],['Mill Path',650,640],['Mere Edge',620,1380],['Glass Dunes',1450,1640],
+  ['Stones Rise',1480,600],['Coast Road',1760,960],['Salt Cut',2200,870],['Wreck Point',2260,1560],['Lighthouse Stair',2600,790],
+];
+const NODES = [
+  ['oil',470,470],['oil',590,350],['oil',370,580],['oil',2410,1700],['oil',2150,1760],['oil',860,930],
+  ['glass',1350,1800],['glass',1560,1880],['glass',1720,1760],['glass',1250,1690],['glass',720,1620],
+  ['iron',2310,1830],['iron',2490,1640],['iron',2100,1660],['iron',1090,1180],['iron',1610,380],
+];
+const POIS = [
+  { id:'mill',   name:'The Old Mill',       x:480,  y:430 },
+  { id:'stones', name:'Barrow Stones',      x:1520, y:330 },
+  { id:'caves',  name:'Gull Caves',         x:2360, y:300 },
+  { id:'mere',   name:'The Drowned Mere',   x:560,  y:1720 },
+  { id:'chapel', name:'Sunken Chapel',      x:290,  y:1460 },
+  { id:'dunes',  name:'Glass Dunes',        x:1500, y:1860 },
+  { id:'wreck',  name:'Wreck of the Merrow',x:2330, y:1770 },
+  { id:'light',  name:'Hollowmere Light',   x:2905, y:790 },
+];
+const SHARD_SPOTS = [[420,300],[660,250],[300,720],[1370,220],[1660,240],[1820,430],[2240,170],[2520,360],[2680,210],[250,1520],
+  [420,1880],[760,1860],[930,1520],[1180,1960],[1820,1960],[2010,1880],[2620,1880],[2720,1480],[2010,1300],[1150,440],[2800,1210],[1880,650]];
+const NPCS = [
+  { id:'maud',   name:'Maud Tanner',  role:'Innkeeper, the Salt & Wick', x:1045, y:905,  color:'#d9a066' },
+  { id:'nell',   name:'Nell Corran',  role:'Net-mender',                 x:1120, y:1110, color:'#8fb8de' },
+  { id:'cale',   name:'Brother Cale', role:'Chaplain',                   x:820,  y:1200, color:'#c9b6e4' },
+  { id:'harrow', name:'Harrow',       role:'Smith',                      x:1060, y:1215, color:'#c46a3c' },
+  { id:'esk',    name:'Widow Esk',    role:'Keeps the hearth',           x:905,  y:1015, color:'#e8e2cf' },
+];
+const QUESTS = {
+  tankard: { npc:'maud', name:'The Unpaid Tab', item:'pewter tankard', x:530, y:390, where:'the Old Mill',
+    ask:"Silas owed me forty years of ale. His tankard's still hanging in the Old Mill where he used to sulk. Fetch it and we'll call it square.",
+    thanks:"Engraved on the base: 'For Maud, who kept my seat warm.' ...I never gave him this. Did I?" },
+  compass: { npc:'nell', name:'North by Lamplight', item:'brass compass', x:2390, y:1845, where:'the Wreck of the Merrow',
+    ask:"Da's compass went down with the Merrow. The wreck's crawling with them now, but it's all I'd have left of him. Please.",
+    thanks:"'To Silas, from Corran.' That's Da's hand. He gave it to Silas. Why do I remember it as Da's?" },
+  bell:    { npc:'cale', name:'The Drowned Bell', item:'bell clapper', x:300, y:1440, where:'the Sunken Chapel',
+    ask:"The old chapel sank into the Mere before I was born. Its bell still hangs there. Bring me the clapper, and mind what answers when it moves.",
+    thanks:"It is warm. Something rang this bell recently, and every year before that. On the same night, I think." },
+  key:     { npc:'harrow', name:'Cold Forge', item:'iron lamp-key', x:1570, y:290, where:'the Barrow Stones',
+    ask:"Some fool left an iron key in the Barrow Stones. My mark's on it, they say. I don't remember making it. Bring it here.",
+    thanks:"My mark, right enough. I remember the heat of it, and a pair of scarred hands taking it from me." },
+};
+// How each townsperson remembers Silas: the last entry whose quests are all done wins.
+const MEMORY = {
+  maud:   [[[], "Silas? Kept a tab at the Salt & Wick for forty years and never paid a copper. Sat by the window facing the sea, drinking alone."],
+           [['tankard'], "That tankard... He didn't drink, did he? He came every night so I wouldn't have to close up alone after my Tom drowned. Why did I remember a drunk?"],
+           [['tankard','compass'], "Nell's compass, my tankard. We all gave him something and none of us remember giving it. Something's been taking him out of our heads, love. A piece at a time."]],
+  nell:   [[[], "The keeper was my da. He rowed out to the rocks the night of the storm and never rowed back. That's what I remember. That's what I've always remembered."],
+           [['compass'], "Silas wasn't my father. He was the one who pulled my father out of the water, too late. Why would I remember it wrong?"],
+           [['compass','bell'], "The bell rang the night Da drowned. Silas rang it, every year after, alone. He was grieving my da for me, so I wouldn't have to."]],
+  cale:   [[[], "The keeper? A saint, child. Never set foot in my chapel, yet he lit a candle for every soul the sea took. Some nights I counted forty flames in his window."],
+           [['bell'], "I found an entry in the parish book tonight, in my own hand: 'Silas has made terms with what lies under the Mere.' I have no memory of writing it."],
+           [['bell','key'], "That key opens nothing in the lighthouse but the lamp itself. There was never oil in that lamp, child. I think I knew that once."]],
+  harrow: [[[], "Keeper? There's no keeper. The light runs itself, always has. You young ones and your stories."],
+           [['key'], "I forged that key. Why would a smith forget the hands he made a key for? Unless something took them from me."],
+           [['key','tankard'], "Maud swears he sat at her window every night. I remember an empty stool by that window, every night, for years. Both can't be true. I think both are."]],
+};
+const ESK = [
+  "The dark isn't just dark tonight, dear. It eats. First the light, then whatever the light used to show you. Fill the dawn and we'll see what's left of Silas.",
+  "A page of his log, pinned to my hearth by nobody. Forty years without oil. Keep going, dear. The next part is worse.",
+  "Memory. He burned memory. Mine of him too, I shouldn't wonder. Go on, bring the glass home.",
+  "Every shard is a piece of him. Carry them gently. We're nearly there.",
+  "He's in the light now. Remember him right.",
+];
+const TRUTH = [
+  { at:.25, title:'I · The Log', text:"Pinned to the hearth post, in a hand nobody recognises: a page torn from the keeper's log. 'Day 14,602. The oil failed forty years ago. I found another fuel. It asks one thing a night, and I have been paying. Forgive me.'" },
+  { at:.5,  title:'II · The Fuel', text:"The lamp of Hollowmere never burned oil. It burns remembrance. Each night Silas fed it one memory of his own, and when his own ran out he began to feed it the town's memories of him, gently, so no one would grieve when he was gone. That is why no two people remember him the same." },
+  { at:.75, title:'III · The Glass', text:"The lens did not shatter. It was spent. Every shard out in the dark is a memory the lamp burned and the night cooled into glass. Each one carried home is a piece of Silas returned to the town that forgot him." },
+  { at:1,   title:'IV · First Light', text:"At the top of the light, where the lamp should be, stands a man made of flame. For the first time in years every soul in Hollowmere sees the same face. 'Remember me right,' says Silas Penhallow, 'and it will be enough to burn on.' Then the sun comes up over the Mere." },
+];
+const WHISPERS = [ null,
+  "'Forty years he fed me a memory a night. Now I feed myself.'",
+  "'He was mine before he was yours. Ask the bell who struck the bargain.'",
+  "'Let the light stay out, little town. You will forget you ever had a sun.'" ];
+const MEMS = [
+  "Silas at nine, counting ships from the harbour wall and losing count at the forty-first.",
+  "His mother teaching him to trim a wick: 'Short enough to see by, long enough to last.'",
+  "A girl with salt in her hair laughing at him on the dunes. He never learned her name. He burned that one first.",
+  "The storm of '81. Silas in the surf with a rope, and Corran not breathing.",
+  "Maud's kitchen at closing time. Two cups, the window, not a word needed.",
+  "The first night the oil ran dry, and something under the Mere offering to trade.",
+  "Brother Cale as a boy, stealing apples from the lighthouse garden. Silas pretending not to see.",
+  "Harrow's forge, blue-hot. 'Make it plain,' Silas says. 'Nobody should notice the key.'",
+  "Nell at six, asleep on a coil of rope while Silas mended her father's nets.",
+  "Forty candles in the lighthouse window, one for every drowned soul, each lit from the one before.",
+  "The bell in the sunken chapel, rung once a year, alone.",
+  "His own name, spoken by his mother. He fed it to the lamp on the night the light went out.",
+];
+const BOT_NAMES = ['Brannoc','Ysolde','mossbeard','Tamsin','Pell','Oriel','quietfox','Hobb','Marisol','Dunmore','Fennick','Isolde_R','Wick',
+  'saltlung','Bryher','Kerensa','Lowen','Morwenna','Jago','Tegen','Senara','Ruan','lanternjaw','Nessa','Corvin','Ebb','Gwynn','tidemouse','Arlo','Petroc'];
+const GUILDS = ['Lamplight','Salt & Wick','Tidewalkers','Gull Watch','Mere Wardens','—'];
+const CHAT = {
+  crafter:['anyone spare glass? dunes are picked clean','building at {site}, cover me pls','oil run to the Old Mill, who\'s coming','{site} lantern is low on oil','if a lantern gutters, one oil relights it','{lit} lanterns up, need more'],
+  fighter:['holding {site}','wisps are fast tonight, stay in the light','wave at {site}, need hands','o7 whoever held {site}','drowned hit hard, kite them','LF escort to the Wreck'],
+  explorer:['got a shard, running it to the light','shard fading, need a lit path','the Mere has glimmers, careful','anyone lit Salt Cut? heading to the light','the caves are crawling','delivered, lens is coming together'],
+  any:['remember when the sun used to rise','Maud\'s ale tastes like lamp oil','is this the longest night yet?','gg if we pull this off','my home lantern from last siege still flickers lol','who even was Silas','anyone else\'s memory of the keeper keep changing?','first time doing the siege, where do i go','lighthouse run in 5?'],
+  reply:['lol','o7','same','true','^','agreed','on my way','we got this','ty','careful out there'],
+};
+// ================= UTIL =================
+const rand=(a,b)=>a+Math.random()*(b-a), pick=a=>a[Math.floor(Math.random()*a.length)];
+const clamp=(v,a,b)=>v<a?a:v>b?b:v, d2=(a,b)=>(a.x-b.x)**2+(a.y-b.y)**2, dist=(a,b)=>Math.sqrt(d2(a,b));
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const shoreX=y=>3040+50*Math.sin(y/160)+130*Math.exp(-(((y-790)/150)**2));
+const shoreY=x=>2090+40*Math.sin(x/190+1);
+const land=p=>{ p.x=clamp(p.x,70,shoreX(p.y)-30); p.y=clamp(p.y,70,shoreY(p.x)-30); };
+const bagCount=p=>p.bag.oil+p.bag.glass+p.bag.iron;
+const canBuild=p=>p.bag.oil>=2&&p.bag.glass>=1&&p.bag.iron>=1;
+const KEYS={};
+let G=null, me=null, uid=0;
+
+// ================= SETUP =================
+function botRoles(n, mine){
+  const others=Object.keys(ROLES).filter(r=>r!==mine), k=Math.ceil(n*.36), out=[];
+  for(const r of others) for(let i=0;i<k&&out.length<n;i++) out.push(r);
+  while(out.length<n) out.push(mine);
+  return out;
+}
+function mkPlayer(name, role, bot){
+  const R=ROLES[role];
+  return { id:++uid, name, role, bot, guild:bot?pick(GUILDS):'', x:HEARTH.x+rand(-90,90), y:HEARTH.y+rand(-90,90),
+    hp:R.hp, maxHp:R.hp, spd:R.spd, face:rand(0,6), bag:{oil:0,glass:0,iron:0}, carry:[], item:null,
+    cd:{atk:0,q:0,r:0}, dead:0, hurt:0, inv:0, cry:0, flash:0, swing:0, think:rand(0,.5),
+    contrib:{craft:0,combat:0,explore:0}, renown:0, goal:null, chan:null, inL:true };
+}
+const scaleFor=n=>clamp(n/10,.4,2.2);
+function newGame(o){
+  uid=0;
+  G={ t:0, hourT:0, hours:0, phase:1, phaseT:0, tier:0, pil:{craft:0,combat:0,explore:0}, truth:0, kindle:null, won:false, dawnT:0, over:false,
+    players:[], foes:[], fx:[], floats:[], flares:[], shards:[], items:[], waves:[], log:[], toasts:[], stories:[],
+    waveT:15, spawnT:0, popT:rand(25,40), chatT:rand(3,7), shardT:0, reveal:0, shake:0,
+    done:new Set(), quests:{}, found:new Set(), journal:{truth:[], mems:[]}, mems:shuffle(MEMS.slice()),
+    fog:new Uint8Array(40*28), popBase:o.pop, auto:!!o.auto, names:shuffle(BOT_NAMES.slice()),
+    stats:{built:0,kills:0,shards:0,held:0,lost:0,deepened:0,peak:o.pop} };
+  G.hearth={ name:'the Hearth', x:HEARTH.x, y:HEARTH.y, r:HEARTH.r, baseR:HEARTH.r, lit:true, hp:1e9, maxHp:1e9, hearth:true };
+  G.lanterns=SITES.map(([name,x,y],i)=>({ t:'site', id:i, name, x, y, lit:false, fuel:0, hp:0, maxHp:200, baseR:235, r:0, claim:0, keeper:null, hit:0 }));
+  G.light={ t:'light', id:99, name:'the Hollowmere Light', x:LIGHTHOUSE.x, y:LIGHTHOUSE.y, lit:false, fuel:100, hp:0, maxHp:900, baseR:380, r:0, special:true, hit:0 };
+  G.lanterns.push(G.light);
+  G.nodes=NODES.map(([kind,x,y])=>({ t:'node', kind, x, y, ch:4, max:4, rt:0 }));
+  for(const i of [0,1]) lightUp(G.lanterns[i], null);
+  me=mkPlayer((o.name||'Wren').slice(0,16), o.role, !!o.auto); me.me=true; me.guild='Lamplight';
+  G.players.push(me);
+  for(const r of botRoles(o.pop-1, o.role)) G.players.push(mkPlayer(G.names.pop(), r, true));
+  G.scale=scaleFor(G.players.length);
+  for(let i=0;i<6;i++) spawnShard();
+  G.L=lightsNow();
+  sys(`The sun was due at six. It did not come. ${G.players.length} souls are holding Hollowmere.`);
+  sys(`Fill all three pillars of the dawn meter before each watch runs out, or the night will deepen.`);
+}
+
+// ================= HELPERS =================
+function sys(txt,cls='sys'){ G.log.push({cls,txt}); }
+function chat(p,txt){ G.log.push({cls:'chat',who:p.name,col:ROLES[p.role].color,guild:p.guild,txt}); }
+function toast(txt){ G.toasts.push(txt); }
+function note(p,txt){ if(p===me&&!G.auto) toast(txt); }
+function float(x,y,txt,col){ G.floats.push({x,y,txt,col,t:1.4}); }
+function fx(k,x,y,o={}){ G.fx.push(Object.assign({k,x,y,t:0,dur:.5},o)); }
+const danger=()=>(1+.12*G.hours)*TIERS[G.tier].mult;
+const hrs=()=>Math.min(G.hours,12);
+const hpMul=()=>1+.05*hrs()+.2*G.tier, dmgMul=()=>1+.04*hrs()+.15*G.tier;
+function lightsNow(){ const L=[G.hearth]; for(const l of G.lanterns) if(l.lit&&l.r>0) L.push(l); for(const f of G.flares) L.push(f); return L; }
+function inLight(x,y,pad=0){ for(const l of G.L) if((x-l.x)**2+(y-l.y)**2<(l.r-pad)**2) return l; return null; }
+function nearest(list, p, R, ok){ let b=null, bd=R*R; for(const e of list){ if(e.dead||e.gone||(ok&&!ok(e))) continue; const d=d2(e,p); if(d<bd){bd=d;b=e} } return b; }
+const nearestFoe=(p,R,ok)=>nearest(G.foes,p,R,ok);
+const countFoes=(p,R)=>G.foes.reduce((n,f)=>n+(!f.dead&&d2(f,p)<R*R),0);
+function nearestLight(p){ return nearest(G.L,p,1e5)||G.hearth; }
+function moveTo(e,x,y,spd,dt){
+  const dx=x-e.x, dy=y-e.y, d=Math.hypot(dx,dy);
+  if(d>1){ const s=Math.min(d,spd*dt); e.x+=dx/d*s; e.y+=dy/d*s; e.face=Math.atan2(dy,dx); }
+  return d;
+}
+function lightUp(l,p){ l.lit=true; l.fuel=100; l.hp=l.maxHp; l.keeper=p; l.claim=0; }
+function lanternR(l){
+  if(!l.lit) return 0;
+  if(l.special){ const k=G.kindle; return G.won?Math.min(2400,380+G.dawnT*400):(150+230*(k?k.t/KINDLE_TIME:0))*(.55+.45*l.hp/l.maxHp); }
+  return l.baseR*(.5+.5*l.hp/l.maxHp)*(.55+.45*Math.min(1,l.fuel/20));
+}
+
+// ================= DAWN METER =================
+function give(p, pil, pts){
+  if(pts<=0) return;
+  const cap=G.phase/3, before=G.pil[pil];
+  G.pil[pil]=Math.min(cap, before+pts*TIERS[G.tier].gain/(3*REQ*G.scale));
+  if(!p) return;
+  p.contrib[pil]+=pts; p.renown+=pts*TIERS[G.tier].reward;
+  if(p===me&&pts>=1){
+    float(p.x,p.y-30,`+${Math.round(pts*10)/10} ${PNAME[pil]}`,PCOL[pil]);
+    if(before>=cap-1e-9&&!G.kindle&&!G.won&&G.t-(G.capHintT||-99)>40){ G.capHintT=G.t; toast(`${PNAME[pil]} is held for this watch. Help the other pillars.`); }
+  }
+}
+const dawn=()=>(G.pil.craft+G.pil.combat+G.pil.explore)/3;
+
+// ================= ENTITIES =================
+function spawnShard(){
+  const free=SHARD_SPOTS.map((s,i)=>i).filter(i=>!G.shards.some(s=>s.spot===i));
+  if(!free.length) return;
+  const i=pick(free), [x,y]=SHARD_SPOTS[i];
+  G.shards.push({ t:'shard', spot:i, x:x+rand(-30,30), y:y+rand(-30,30), ph:rand(0,6) });
+}
+function rollFoe(){
+  const r=Math.random(), dr=(G.tier>=1||G.hours>=5)?.07+.04*G.tier:0;
+  return r<dr?'drowned':r<dr+.4?'wisp':'hollow';
+}
+function mkFoe(type,x,y){
+  const F=FOES[type], m=hpMul(), f={ id:++uid, type, x, y, hp:F.hp*m, maxHp:F.hp*m, spd:F.spd*(1+.03*G.tier), dmg:F.dmg, gnaw:F.gnaw, r:F.r, pts:F.pts, cd:F.cd,
+    acd:rand(0,.6), stun:0, aggro:null, aggroT:0, calm:0, lurk:0, scan:rand(0,.4), wave:null, goalL:null, wx:x, wy:y, flash:0, ph:rand(0,6) };
+  land(f); G.foes.push(f); return f;
+}
+function spawnWaveAt(L, n, spread=[250,420]){
+  const w={ id:++uid, L, left:0, n, by:new Map() };
+  for(let i=0;i<n;i++){ const a=rand(0,Math.PI*2), d=L.r+rand(spread[0],spread[1]); const f=mkFoe(rollFoe(), L.x+Math.cos(a)*d, L.y+Math.sin(a)*d); f.wave=w; f.goalL=L; w.left++; }
+  G.waves.push(w); return w;
+}
+const waveSize=()=>Math.min(12, Math.round((3+hrs()*.6)*TIERS[G.tier].mult*(.45+.55*G.scale)));
+function spawnWave(){
+  const lit=G.lanterns.filter(l=>l.lit&&!l.special), d=danger();
+  const targets=lit.length?shuffle(lit.slice()).slice(0,Math.min(lit.length,3,1+Math.floor(d/1.6))):[G.hearth];
+  for(const L of targets){
+    spawnWaveAt(L, waveSize());
+    sys(`The Gloam rises toward ${L.hearth?'the Hearth itself':'the '+L.name+' lantern'}.`);
+    if(!G.auto&&d2(me,L)<900*900) toast(`A wave is coming for ${L.hearth?'the Hearth':L.name}!`);
+    const f=pick(G.players.filter(p=>p.bot&&p.role==='fighter'));
+    if(f&&Math.random()<.5) chat(f, pick(['wave at {site}, need hands','on my way to {site}','{site} again?? ok going']).replace(/\{site\}/g,L.hearth?'the hearth':L.name));
+  }
+}
+function ambush(x,y,n){
+  for(let i=0;i<n;i++){ const a=rand(0,Math.PI*2), f=mkFoe(rollFoe(), x+Math.cos(a)*rand(240,330), y+Math.sin(a)*rand(240,330)); f.aggro=me; f.aggroT=8; }
+  sys('Something in the dark noticed.');
+}
+function hitFoe(f,p,dmg){
+  if(f.dead) return;
+  f.hp-=dmg; f.flash=.12; f.aggro=p; f.aggroT=3; f.calm=0;
+  if(f.wave) f.wave.by.set(p,(f.wave.by.get(p)||0)+dmg);
+  if(f.hp<=0){
+    f.dead=true; G.stats.kills++;
+    if(f.wave) f.wave.left--;
+    give(p,'combat',f.pts*(p.role==='fighter'?1:.5));
+    fx('burst',f.x,f.y,{r:f.r*2.5,col:'#9fb4d8',dur:.6});
+  }
+}
+function hurt(p,dmg){
+  if(p.dead||p.inv>0) return;
+  if(p.cry>0) dmg*=.5;
+  p.hp-=dmg; p.hurt=2.5; p.flash=.15;
+  if(p===me) G.shake=Math.min(8,G.shake+dmg*.4);
+  if(p.hp<=0) die(p);
+}
+function die(p){
+  p.dead=p.bot?8:6; p.hp=0; p.goal=null; p.chan=null;
+  if(p.carry.length){ if(p===me) toast('Your shards crumble back into the dark.'); p.carry=[]; }
+  for(const k in p.bag) p.bag[k]=Math.floor(p.bag[k]/2);
+  fx('burst',p.x,p.y,{r:40,col:'#e8e2cf',dur:.9});
+  if(p===me){ sys('You fall. The hearth calls you back…'); }
+  else if(Math.random()<.4) chat(p, pick(['welp','rip me','back at hearth','they got me at the edge','ow']));
+}
+function swing(p,f){
+  if(p.cd.atk>0) return;
+  const R=ROLES[p.role];
+  p.cd.atk=p.role==='fighter'?.65:.75; p.swing=.18; p.face=Math.atan2(f.y-p.y,f.x-p.x);
+  hitFoe(f,p,R.dmg*(1+.05*hrs()+.2*G.tier)*(p.cry>0?1.2:1));
+}
+function ability(p,k){
+  if(p.dead||p.cd[k]>0) return false;
+  const A=ROLES[p.role][k], key=p.role+k, dm=ROLES[p.role].dmg*(1+.05*hrs()+.2*G.tier);
+  if(key==='crafterq'){ for(const f of G.foes) if(!f.dead&&d2(f,p)<170*170){ f.stun=2.5; hitFoe(f,p,10); } fx('ring',p.x,p.y,{r:170,col:'#fff4d6',dur:.5}); }
+  else if(key==='crafterr'){ G.flares.push({ x:p.x, y:p.y, r:170, t:20, dur:20, flare:true }); fx('ring',p.x,p.y,{r:170,col:'#f2b441',dur:.8}); }
+  else if(key==='fighterq'){ for(const f of G.foes) if(!f.dead&&d2(f,p)<105*105) hitFoe(f,p,dm*1.6); fx('ring',p.x,p.y,{r:105,col:'#e0564b',dur:.35}); }
+  else if(key==='fighterr'){ p.cry=5; for(const f of G.foes) if(!f.dead&&d2(f,p)<320*320){ f.aggro=p; f.aggroT=5; f.calm=0; } fx('ring',p.x,p.y,{r:320,col:'#e0564b',dur:.7}); }
+  else if(key==='explorerq'){
+    const g=p.goal&&(p.goal.ref||p.goal), a=g&&g.x!==undefined?Math.atan2(g.y-p.y,g.x-p.x):p.face;
+    fx('trail',p.x,p.y,{x2:p.x+Math.cos(a)*150,y2:p.y+Math.sin(a)*150,col:'#4fc3b5',dur:.4});
+    p.x+=Math.cos(a)*150; p.y+=Math.sin(a)*150; land(p); p.inv=.35; p.face=a;
+  }
+  else if(key==='explorerr'){ G.flares.push({ x:p.x, y:p.y, r:130, t:6, dur:6, flare:true }); if(p===me) G.reveal=10; fx('ring',p.x,p.y,{r:800,col:'#4fc3b5',dur:1.2}); }
+  p.cd[k]=A.cd; return true;
+}
+
+// ================= INTERACTION =================
+const useRange=r=>r.t==='light'?110:r.t==='npc'||r.t==='monu'?64:r.t==='site'?50:40;
+function interact(p,r){
+  if(p.dead) return;
+  switch(r.t){
+    case 'node':
+      if(r.ch<=0) return note(p,'Picked clean. It will refill in a while.');
+      if(bagCount(p)>=10) return note(p,'Your pack is full (10).');
+      p.chan={ k:'gather', t:0, dur:p.role==='crafter'?1:2, ref:r }; break;
+    case 'site':
+      if(r.lit){
+        if(p.bag.oil<1) return note(p,'Tending a lantern takes 1 oil.');
+        if(r.fuel>92&&r.hp>=r.maxHp) return note(p,`The ${r.name} lantern burns steady.`);
+        p.chan={ k:'tend', t:0, dur:.8, ref:r };
+      } else if(r.hp>0){
+        if(p.bag.oil<1) return note(p,'Guttered. One oil will relight it.');
+        p.chan={ k:'tend', t:0, dur:.8, ref:r };
+      } else {
+        if(p.role!=='crafter') return note(p,'Only a Crafter can assemble a lantern here.');
+        if(!canBuild(p)) return note(p,'A lantern needs 2 oil, 1 glass and 1 iron.');
+        p.chan={ k:'build', t:0, dur:2.4, ref:r };
+      } break;
+    case 'shard':
+      if(p.role!=='explorer') return;
+      if(p.carry.length>=2) return note(p,'You can only carry two shards.');
+      p.chan={ k:'shard', t:0, dur:.8, ref:r }; break;
+    case 'item': p.chan={ k:'item', t:0, dur:1, ref:r }; break;
+    case 'light':
+      if(p.carry.length) deliver(p);
+      else if(G.kindle&&p.bag.oil>0&&r.hp<r.maxHp) p.chan={ k:'tend', t:0, dur:.8, ref:r };
+      else note(p, G.kindle?'Hold the light! Oil will mend the lamp.':'The lamp room is dark. Explorers bring shards here.');
+      break;
+    case 'npc': if(p===me&&!G.auto) UI.npc(r); break;
+    case 'monu': if(p===me&&!G.auto) UI.monument(); break;
+  }
+}
+function finishChan(p){
+  const c=p.chan, r=c.ref; p.chan=null;
+  if(c.k==='gather'){
+    if(r.ch>0&&bagCount(p)<10){ r.ch--; p.bag[r.kind]++; if(p===me) float(p.x,p.y-30,`+1 ${r.kind}`,'#ebe2c9'); }
+    if(p===me&&r.ch>0&&bagCount(p)<10) p.chan={ k:'gather', t:0, dur:c.dur, ref:r };
+  } else if(c.k==='build'){
+    if(!r.lit&&r.hp<=0&&canBuild(p)){
+      p.bag.oil-=2; p.bag.glass--; p.bag.iron--; lightUp(r,p); give(p,'craft',14); G.stats.built++;
+      fx('ring',r.x,r.y,{r:235,col:'#f2b441',dur:1}); sys(`${p.name} lit the ${r.name} lantern.`);
+    }
+  } else if(c.k==='tend'){
+    if(p.bag.oil>0){
+      p.bag.oil--;
+      if(r.t==='light'){ r.hp=Math.min(r.maxHp,r.hp+120); give(p,'craft',3); }
+      else if(!r.lit){ r.lit=true; r.fuel=60; r.keeper=p; give(p,'craft',5); sys(`${p.name} relit the ${r.name} lantern.`); }
+      else { r.fuel=Math.min(100,r.fuel+60); r.hp=Math.min(r.maxHp,r.hp+40); r.keeper=p; give(p,'craft',3); }
+      fx('ring',r.x,r.y,{r:60,col:'#f2b441',dur:.5});
+    }
+  } else if(c.k==='shard'){
+    if(G.shards.includes(r)){ G.shards.splice(G.shards.indexOf(r),1); p.carry.push({glow:100}); G.shardT=5;
+      if(p===me) toast('A lens shard. It is cold, and it fades in the dark.'); }
+  } else if(c.k==='item'){
+    if(G.items.includes(r)){ G.items.splice(G.items.indexOf(r),1); p.item=r.q; G.quests[r.q]='carry';
+      toast(`You found the ${QUESTS[r.q].item}. Take it back to ${NPCS.find(n=>n.id===QUESTS[r.q].npc).name}.`);
+      ambush(p.x,p.y,3+Math.round(G.hours/3)); }
+  }
+}
+function deliver(p){
+  for(const s of p.carry){
+    give(p,'explore',14); G.stats.shards++;
+    const m=G.mems.length?G.mems.pop():null;
+    if(m){ G.journal.mems.push({m,by:p.name}); sys(`${p===me?'Your':p.name+'’s'} shard remembers: ${m}`,'lore'); }
+  }
+  if(p===me) toast(p.carry.length>1?'Two memories return to the lens.':'A memory returns to the lens.');
+  else if(Math.random()<.5) chat(p,'delivered, lens is coming together');
+  fx('ring',G.light.x,G.light.y,{r:140,col:'#4fc3b5',dur:1});
+  p.carry=[];
+}
+function acceptQuest(id){ const q=QUESTS[id]; G.quests[id]='active'; G.items.push({ t:'item', q:id, x:q.x, y:q.y, ph:0 }); sys(`Quest accepted: ${q.name}. Search ${q.where}.`); }
+function completeQuest(id){
+  G.quests[id]='done'; G.done.add(id); me.item=null; give(me,'explore',12);
+  sys(`Quest complete: ${QUESTS[id].name}. The town remembers Silas a little differently now.`,'lore');
+}
+const memoryOf=id=>{ let t=''; for(const [need,line] of MEMORY[id]) if(need.every(q=>G.done.has(q))) t=line; return t; };
+
+// ================= BOTS =================
+function botThink(p,dt){
+  if((p.think-=dt)>0||p.chan) return;
+  p.think=rand(.3,.6);
+  if(p.hp<p.maxHp*.35&&!p.inL){ const l=nearestLight(p); p.goal={ k:'move', x:l.x+rand(-40,40), y:l.y+rand(-40,40) }; return; }
+  const near=nearestFoe(p,95);
+  if(near&&(p.role==='fighter'||near.aggro===p)){
+    p.goal={ k:'attack', ref:near };
+    if(p.role==='fighter'&&countFoes(p,105)>=2) ability(p,'q');
+    if(p.role==='crafter'&&countFoes(p,170)>=3) ability(p,'q');
+    if(p.role==='explorer'&&p.carry.length&&p.hp<p.maxHp*.6) ability(p,'q');
+    return;
+  }
+  if(G.kindle||G.won) return botKindle(p);
+  if(p.role==='crafter') botCrafter(p); else if(p.role==='fighter') botFighter(p); else botExplorer(p);
+}
+function botKindle(p){
+  const L=G.light;
+  if(p.role==='fighter'||p.role==='explorer'&&!p.carry.length){ const f=nearestFoe(L,L.r+260); if(f&&(p.role==='fighter'||d2(f,p)<250*250)){ p.goal={ k:'attack', ref:f }; return; } }
+  if(p.carry.length){ p.goal={ k:'use', ref:L }; return; }
+  if(p.role==='crafter'){
+    if(p.bag.oil>0&&L.hp<L.maxHp-60){ p.goal={ k:'use', ref:L }; return; }
+    if(p.bag.oil===0){ const n=nearest(G.nodes,p,1e5,n=>n.kind==='oil'&&n.ch>0); if(n){ p.goal={ k:'use', ref:n }; return; } }
+  }
+  if(!p.goal&&d2(p,L)>230*230) p.goal={ k:'move', x:L.x-rand(60,190), y:L.y+rand(-130,130) };
+}
+function botCrafter(p){
+  if(p.goal) return;
+  if(p.bag.oil>0){ const l=nearest(G.lanterns,p,1e5,l=>!l.special&&((l.lit&&l.fuel<40)||(!l.lit&&l.hp>0))); if(l){ p.goal={ k:'use', ref:l }; return; } }
+  if(canBuild(p)){ const l=nearest(G.lanterns,p,1e5,l=>!l.special&&!l.lit&&l.hp<=0&&(!l.claim||l.claim===p.id)); if(l){ l.claim=p.id; p.goal={ k:'use', ref:l }; return; } }
+  if(bagCount(p)>=10){ const lit=G.lanterns.filter(l=>l.lit&&!l.special), l=lit.length?pick(lit):G.hearth; p.goal={ k:'move', x:l.x+rand(-90,90), y:l.y+rand(-90,90) }; return; }
+  const need=p.bag.oil<3?'oil':p.bag.glass<1?'glass':p.bag.iron<1?'iron':pick(['oil','glass','iron']);
+  const n=nearest(G.nodes,p,1e5,n=>n.kind===need&&n.ch>0)||nearest(G.nodes,p,1e5,n=>n.ch>0);
+  if(n) p.goal={ k:'use', ref:n };
+}
+function botFighter(p){
+  const w=nearestFoe(p,1700,f=>f.wave);
+  if(w){ p.goal={ k:'attack', ref:w }; return; }
+  const f=nearestFoe(p,380);
+  if(f){ p.goal={ k:'attack', ref:f }; return; }
+  if(!p.goal){ const lit=G.lanterns.filter(l=>l.lit&&!l.special), l=lit.length?pick(lit):G.hearth; p.goal={ k:'move', x:l.x+rand(-130,130), y:l.y+rand(-130,130) }; }
+}
+function botExplorer(p){
+  if(p.carry.length){
+    const low=Math.min(...p.carry.map(s=>s.glow));
+    if(low<35&&!p.inL){ const l=nearestLight(p); p.goal={ k:'move', x:l.x, y:l.y }; return; }
+    if(p.inL&&low<70){ p.goal=null; return; }
+    if(p.carry.length>=2||!nearest(G.shards,p,450)){ p.goal={ k:'use', ref:G.light }; return; }
+  }
+  const s=nearest(G.shards,p,420);
+  if(s){ p.goal={ k:'use', ref:s }; return; }
+  if(!p.goal){ const poi=pick(POIS); p.goal={ k:'move', x:poi.x+rand(-160,160), y:poi.y+rand(-160,160) }; }
+}
+
+// ================= STEP =================
+function updPlayer(p,dt){
+  if(p.dead){ p.dead-=dt; if(p.dead<=0){ p.dead=0; p.hp=p.maxHp; p.x=HEARTH.x+rand(-60,60); p.y=HEARTH.y+rand(-60,60); if(p===me) toast('You wake by the hearth.'); } return; }
+  for(const k in p.cd) p.cd[k]=Math.max(0,p.cd[k]-dt);
+  p.inv-=dt; p.cry-=dt; p.hurt-=dt; p.flash-=dt; p.swing-=dt;
+  const L=inLight(p.x,p.y); p.inL=!!L;
+  if(L&&p.hurt<=0) p.hp=Math.min(p.maxHp,p.hp+6*dt);
+  for(const s of p.carry) s.glow=L?Math.min(100,s.glow+12*dt):s.glow-dt*2*(1+.25*G.tier);
+  if(p.carry.some(s=>s.glow<=0)){ p.carry=p.carry.filter(s=>s.glow>0); if(p===me) toast('A shard crumbled in the dark. Keep to the light.'); else chat(p,'lost a shard to the dark, need a lit path'); }
+  if(p.bot) botThink(p,dt);
+  if(p===me&&!p.bot){
+    const kx=(KEYS.right?1:0)-(KEYS.left?1:0), ky=(KEYS.down?1:0)-(KEYS.up?1:0);
+    if(kx||ky){ const d=Math.hypot(kx,ky); p.goal=null; p.chan=null; p.x+=kx/d*p.spd*dt; p.y+=ky/d*p.spd*dt; p.face=Math.atan2(ky,kx); land(p); return; }
+  }
+  if(p.chan){ p.chan.t+=dt; if(p.chan.t>=p.chan.dur) finishChan(p); return; }
+  const g=p.goal;
+  if(g){
+    if(g.k==='move'){ if(moveTo(p,g.x,g.y,p.spd,dt)<6) p.goal=null; }
+    else if(g.k==='attack'){
+      const f=g.ref; if(f.dead){ p.goal=null; }
+      else if(dist(p,f)>ROLES[p.role].range+f.r-4) moveTo(p,f.x,f.y,p.spd,dt);
+      else swing(p,f);
+    } else if(g.k==='use'){
+      const r=g.ref;
+      if((r.t==='shard'&&!G.shards.includes(r))||(r.t==='item'&&!G.items.includes(r))) p.goal=null;
+      else if(dist(p,r)>useRange(r)) moveTo(p,r.x,r.y,p.spd,dt);
+      else { p.goal=null; interact(p,r); }
+    }
+    land(p);
+  } else {
+    const f=nearestFoe(p,ROLES[p.role].range+(p.role==='fighter'?40:14));
+    if(f){ if(dist(p,f)>ROLES[p.role].range+f.r-4) moveTo(p,f.x,f.y,p.spd,dt); else swing(p,f); }
+  }
+}
+function updFoe(f,dt){
+  f.flash-=dt; f.acd-=dt; f.calm-=dt;
+  if(f.stun>0){ f.stun-=dt; return; }
+  const dm=dmgMul(), reach=f.r+16;
+  if(f.aggro&&(f.aggro.dead||f.aggro.gone)) f.aggro=null;
+  if(f.aggro){ f.aggroT-=dt; if(f.aggroT<=0&&!f.wave&&d2(f,f.aggro)>200*200) f.aggro=null; else if(f.aggroT<=0&&f.wave) f.aggro=null; }
+  if(!f.aggro&&!f.wave&&f.calm<=0&&(f.scan-=dt)<=0){
+    f.scan=.4; const p=nearest(G.players,f,280,p=>!p.inL); if(p){ f.aggro=p; f.aggroT=4; }
+  }
+  if(f.aggro){
+    const p=f.aggro, d=dist(f,p);
+    if(p.inL&&d>reach+40){ f.lurk+=dt; if(f.lurk>2.2){ f.aggro=null; f.lurk=0; f.calm=3; } } else f.lurk=0;
+    if(f.aggro){ if(d>reach-2) moveTo(f,p.x,p.y,f.spd,dt); if(d<=reach+4&&f.acd<=0){ f.acd=f.cd; hurt(p,f.dmg*dm); } }
+  } else if(f.wave&&f.goalL&&f.goalL.lit){
+    const L=f.goalL, d=dist(f,L);
+    if(d>L.r+f.r+6) moveTo(f,L.x,L.y,f.spd,dt);
+    else if(f.acd<=0){ f.acd=f.cd; L.hp-=f.gnaw*dm; L.hit=.3; if(Math.random()<.5) fx('spark',f.x,f.y,{dur:.3,col:'#9fb4d8'}); if(L.hp<=0) breakLantern(L); }
+  } else {
+    if(d2(f,{x:f.wx,y:f.wy})<30*30||Math.random()<.002){ f.wx=clamp(f.x+rand(-320,320),80,3000); f.wy=clamp(f.y+rand(-320,320),80,2040); }
+    moveTo(f,f.wx,f.wy,f.spd*.45,dt);
+  }
+  for(const l of G.L){ const dx=f.x-l.x, dy=f.y-l.y, rr=l.r+f.r*.3; if(dx*dx+dy*dy<rr*rr){ const d=Math.hypot(dx,dy)||1; f.x=l.x+dx/d*rr; f.y=l.y+dy/d*rr; } }
+  land(f);
+}
+function breakLantern(L){
+  L.hp=0; L.lit=false; L.fuel=0; L.claim=0;
+  fx('burst',L.x,L.y,{r:120,col:'#f2b441',dur:1});
+  if(L.special) return kindleFail();
+  G.stats.lost++; sys(`The ${L.name} lantern shattered. The dark rushes in.`);
+  if(!G.auto&&d2(me,L)<900*900) toast(`${L.name} has fallen!`);
+}
+function startKindle(){
+  G.kindle={ t:0, surge:4 }; const L=G.light; L.lit=true; L.hp=L.maxHp;
+  sys('All three pillars stand full. The Kindling begins at the lighthouse: hold it for one minute!');
+  toast('The Kindling has begun. Everyone to the lighthouse!');
+  for(const p of G.players) if(p.bot) p.goal=null;
+}
+function kindleFail(){
+  G.kindle=null; for(const k of PILLARS) G.pil[k]=.9;
+  sys('The lamp went dark before it caught. The lens needs mending.');
+  deepen('The Kindling failed');
+}
+function deepen(why){
+  if(G.tier>=TIERS.length-1){ G.phaseT=0; toast(`${why}. There is no deeper night left. Hold on.`); return; }
+  G.tier++; G.phaseT=0; G.stats.deepened++;
+  const T=TIERS[G.tier];
+  sys(`${why}. The night deepens: ${T.name}. Rewards now ×${T.reward}.`);
+  G.stories.push({ k:`${why}. The night deepens.`, title:T.name, text:`The Gloam speaks through the fog: ${WHISPERS[G.tier]}\n\nThe dark grows hungrier, but so does the town: every contribution now counts ×${T.gain} toward the dawn and earns ×${T.reward} renown. A ${T.lamp} and the title prefix "${T.prefix}" wait for whoever sees this through.` });
+}
+function win(){
+  G.won=true; G.kindle=null; G.dawnT=0;
+  for(const f of G.foes) fx('burst',f.x,f.y,{r:f.r*3,col:'#ffe3a3',dur:1.2});
+  G.foes=[]; G.waves=[];
+  sys('The lamp catches. Hollowmere Light burns again, and the sky over the Mere turns grey, then gold.');
+  G.journal.truth.push(TRUTH[3]);
+}
+function fill(s){ const lit=G.lanterns.filter(l=>l.lit&&!l.special); return s.replace(/\{site\}/g,(pick(lit)||G.lanterns[2]).name).replace(/\{lit\}/g,lit.length); }
+function populationTick(){
+  G.popT=rand(22,40);
+  const n=G.players.length, base=G.popBase;
+  if(n>Math.max(3,base*.7)&&Math.random()<.5){
+    const b=pick(G.players.filter(p=>p.bot&&!p.me&&!p.carry.length&&!p.dead));
+    if(b){ b.gone=true; G.players.splice(G.players.indexOf(b),1); for(const l of G.lanterns) if(l.claim===b.id) l.claim=0; sys(`${b.name} has logged off.`); }
+  } else if(n<base*1.3&&G.names.length){
+    const low=PILLARS.slice().sort((a,b)=>G.pil[a]-G.pil[b])[0];
+    const role=Math.random()<.6?Object.keys(ROLES).find(r=>ROLES[r].pillar===low):pick(Object.keys(ROLES));
+    const p=mkPlayer(G.names.pop(),role,true); G.players.push(p);
+    sys(`${p.name}${p.guild&&p.guild!=='—'?' <'+p.guild+'>':''} joined the siege as a ${ROLES[role].name}.`);
+    G.stats.peak=Math.max(G.stats.peak,G.players.length);
+  }
+}
+function step(dt){
+  for(const f of G.fx) f.t+=dt; G.fx=G.fx.filter(f=>f.t<f.dur);
+  for(const f of G.floats){ f.t-=dt; f.y-=22*dt; } G.floats=G.floats.filter(f=>f.t>0);
+  G.shake*=.85;
+  if(G.won){ G.dawnT+=dt; G.light.r=lanternR(G.light); return; }
+  G.t+=dt;
+  if((G.hourT+=dt)>=HOUR){ G.hourT-=HOUR; G.hours++; sys(`Hour ${G.hours} of darkness. The Gloam grows bolder.`); }
+  G.scale+=(scaleFor(G.players.length)-G.scale)*Math.min(1,dt*.2);
+  // lanterns, flares, nodes
+  for(const l of G.lanterns){
+    l.hit-=dt;
+    if(l.lit&&!l.special){
+      l.fuel-=dt*.55*(1+.15*G.tier);
+      if(l.fuel<=0){ l.fuel=0; l.lit=false; sys(`The ${l.name} lantern guttered out. One oil will relight it.`); }
+      else give(l.keeper&&!l.keeper.gone?l.keeper:null,'craft',.05*G.scale*dt);
+    }
+    l.r=lanternR(l);
+  }
+  for(const f of G.flares) f.t-=dt; G.flares=G.flares.filter(f=>f.t>0);
+  for(const n of G.nodes) if(n.ch<n.max&&(n.rt+=dt)>=14){ n.rt=0; n.ch++; }
+  G.L=lightsNow();
+  G.reveal-=dt;
+  for(const p of G.players) updPlayer(p,dt);
+  for(const f of G.foes){ updFoe(f,dt); if(f.life!==undefined&&(f.life-=dt)<=0) f.dead=true; }
+  // gentle separation so waves spread along the light's edge
+  for(let i=0;i<G.foes.length;i++){ const a=G.foes[i]; for(let j=i+1;j<G.foes.length;j++){ const b=G.foes[j], dx=b.x-a.x, dy=b.y-a.y, rr=a.r+b.r; if(dx*dx+dy*dy<rr*rr){ const d=Math.hypot(dx,dy)||1, push=(rr-d)/2; a.x-=dx/d*push; a.y-=dy/d*push; b.x+=dx/d*push; b.y+=dy/d*push; } } }
+  G.foes=G.foes.filter(f=>!f.dead);
+  // waves resolve
+  for(const w of G.waves){
+    if(!w.L.lit){ w.done=true; for(const f of G.foes) if(f.wave===w){ f.wave=null; f.goalL=null; f.life=rand(8,16); } }
+    else if(w.left<=0){
+      w.done=true; let tot=0; for(const v of w.by.values()) tot+=v;
+      if(tot>0){ for(const [p,v] of w.by) give(p,'combat',Math.max(12,4*w.n)*v/tot); G.stats.held++; sys(`${w.L.hearth?'The Hearth':'The '+w.L.name+' lantern'} held. The wave breaks.`); if(w.by.has(me)) toast('Zone held!'); }
+    }
+  }
+  G.waves=G.waves.filter(w=>!w.done);
+  // spawning
+  if(!G.kindle&&(G.waveT-=dt)<=0){ G.waveT=Math.max(14,30-1.2*G.hours)/(.8+.2*TIERS[G.tier].mult); spawnWave(); }
+  if((G.spawnT-=dt)<=0){
+    G.spawnT=1.2;
+    const want=Math.min(30,Math.round((4+hrs()*.8)*TIERS[G.tier].mult*(.45+.55*G.scale))), amb=G.foes.filter(f=>!f.wave);
+    // excess ambient Gloam slips back into the dark, away from you
+    for(let i=0,x=amb.length-want-4;i<amb.length&&x>0;i++) if(!amb[i].aggro&&d2(amb[i],me)>900*900){ amb[i].dead=true; x--; }
+    if(amb.length<want) for(let i=0;i<12;i++){
+      const p={ x:rand(100,3000), y:rand(100,2040) }; land(p);
+      if(!inLight(p.x,p.y,-170)&&d2(p,me)>650*650){ mkFoe(rollFoe(),p.x,p.y); break; }
+    }
+  }
+  if((G.shardT-=dt)<=0){ G.shardT=5; if(G.shards.length<4+Math.round(G.scale*2)) spawnShard(); }
+  // kindling
+  if(G.kindle){
+    const k=G.kindle; k.t+=dt;
+    if((k.surge-=dt)<=0){ k.surge=9; spawnWaveAt(G.light,Math.min(12,Math.round((4+hrs()*.3)*TIERS[G.tier].mult*(.5+.5*G.scale))),[280,460]); }
+    if(k.t>=KINDLE_TIME) win();
+  } else if(!G.won){
+    const cap=G.phase/3;
+    if(PILLARS.every(k=>G.pil[k]>=cap-1e-6)){
+      if(G.phase<3){ G.phase++; G.phaseT=0; sys(`Watch complete. ${WATCHES[G.phase]}.`); toast(WATCHES[G.phase]); G.waveT=Math.min(G.waveT,10); }
+      else startKindle();
+    } else if((G.phaseT+=dt)>=PHASE_HOURS*HOUR) deepen('The watch ran out before the dawn meter filled');
+  }
+  while(G.truth<3&&dawn()>=TRUTH[G.truth].at-1e-6){
+    const T=TRUTH[G.truth++]; G.journal.truth.push(T);
+    G.stories.push({ k:'The truth, in stages', title:T.title, text:T.text });
+    sys(`The dawn meter passes ${Math.round(T.at*100)}%. ${T.title} is revealed.`,'lore');
+  }
+  // fog of war + discoveries (you only)
+  if(!me.dead){
+    const cx=Math.floor(me.x/80), cy=Math.floor(me.y/80);
+    for(let y=cy-4;y<=cy+4;y++) for(let x=cx-4;x<=cx+4;x++) if(x>=0&&y>=0&&x<40&&y<28&&(x-cx)**2+(y-cy)**2<=17) G.fog[y*40+x]=1;
+    for(const poi of POIS) if(!G.found.has(poi.id)&&d2(me,poi)<210*210){ G.found.add(poi.id); give(me,'explore',6); if(!G.auto) toast(`Discovered: ${poi.name}`); }
+  }
+  if((G.popT-=dt)<=0) populationTick();
+  if((G.chatT-=dt)<=0){
+    G.chatT=rand(6,14)/Math.sqrt(G.scale);
+    const b=pick(G.players.filter(p=>p.bot&&!p.me&&!p.dead));
+    if(b) chat(b,fill(pick(Math.random()<.35?CHAT.any:CHAT[b.role])));
+  }
+}
+
+// ================= RENDER =================
+const $=id=>document.getElementById(id);
+const cv=$('cv'), ctx=cv.getContext('2d'), dark=document.createElement('canvas'), dctx=dark.getContext('2d');
+let VW=0, VH=0, DPR=1, ZOOM=1;
+const cam={ x:HEARTH.x, y:HEARTH.y };
+const MONU={ t:'monu', x:MONUMENT.x, y:MONUMENT.y, name:'the Monument' };
+NPCS.forEach(n=>n.t='npc');
+function resize(){
+  DPR=Math.min(2,window.devicePixelRatio||1); VW=innerWidth; VH=innerHeight; buildMini();
+  cv.width=Math.round(VW*DPR); cv.height=Math.round(VH*DPR);
+  ZOOM=VW<700?.68:VW<1100?.85:1;
+  dark.width=Math.ceil(VW/2); dark.height=Math.ceil(VH/2);
+}
+const hexA=(hex,a)=>{ const n=parseInt(hex.slice(1),16); return `rgba(${n>>16},${n>>8&255},${n&255},${a})`; };
+
+// ---- static ground, painted once ----
+const GS=.75, ground=document.createElement('canvas');
+const BUILD=[[1045,850,124,82,'#4a2e25'],[820,1255,92,112,'#3b3a45'],[1075,1275,100,70,'#3d2c22'],[835,880,92,64,'#3a3026'],
+  [755,985,62,48,'#3c3129'],[1185,905,64,50,'#41302a'],[1205,1185,58,46,'#3a2f2a'],[695,1100,56,44,'#3e332b'],[975,1310,62,46,'#382d27'],[1160,1330,56,44,'#3d3028']];
+const ROADS=[[[1100,1030],[1760,960],[2200,870],[2600,790],[2870,790]],[[900,950],[650,640],[480,430]],[[1150,1150],[1450,1640],[1500,1850]],
+  [[800,1200],[620,1380],[560,1650]],[[1760,960],[2260,1560],[2330,1770]],[[1150,900],[1480,600],[1520,330]],[[2200,870],[2360,300]]];
+function buildGround(){
+  ground.width=3400*GS; ground.height=2400*GS;
+  const g=ground.getContext('2d'); g.scale(GS,GS);
+  const blob=(x,y,rx,ry,col,rot=0)=>{ g.fillStyle=col; g.beginPath(); g.ellipse(x,y,rx,ry,rot,0,7); g.fill(); };
+  g.fillStyle='#16221e'; g.fillRect(0,0,3400,2400);
+  const tones=['40,60,48','20,32,28','50,54,40','28,42,50','34,50,36'];
+  for(let i=0;i<1100;i++) blob(rand(0,3400),rand(0,2400),rand(20,130),rand(14,80),`rgba(${pick(tones)},${rand(.1,.3)})`,rand(0,3));
+  blob(560,1720,430,300,'#172622'); // the Mere
+  for(let i=0;i<34;i++){ const x=560+rand(-360,360), y=1720+rand(-240,240); blob(x,y,rand(24,80),rand(14,40),'#0d2528',rand(0,3)); blob(x-4,y-3,rand(10,30),rand(6,14),'rgba(90,130,140,.12)'); }
+  g.strokeStyle='#3b4a2a'; g.lineWidth=2;
+  for(let i=0;i<260;i++){ const x=560+rand(-420,420), y=1720+rand(-280,280); g.beginPath(); g.moveTo(x,y); g.lineTo(x+rand(-4,4),y-rand(8,18)); g.stroke(); }
+  for(let i=0;i<40;i++) blob(1500+rand(-420,420),1830+rand(-150,120),rand(60,160),rand(30,60),`rgba(92,82,58,${rand(.25,.5)})`,rand(-.3,.3));
+  blob(2905,790,170,120,'#2c3036'); blob(2860,760,120,90,'#343a40'); // light's rock
+  blob(2360,290,210,130,'#2a2d31'); for(const [x,y] of [[2300,300],[2400,270],[2350,340]]) blob(x,y,rand(24,34),rand(14,20),'#07090c');
+  g.fillStyle='#29251f'; g.beginPath(); g.arc(960,1060,345,0,7); g.fill();
+  for(let i=0;i<1400;i++){ const a=rand(0,7), r=Math.sqrt(Math.random())*340; blob(960+Math.cos(a)*r,1060+Math.sin(a)*r,rand(4,9),rand(3,7),`rgba(${pick(['70,64,56','30,27,24','58,52,44'])},.5)`,rand(0,3)); }
+  g.lineCap='round'; g.lineJoin='round';
+  for(const [w,c] of [[40,'#2a2621'],[26,'#38332b'],[4,'rgba(80,74,62,.5)']]){ g.lineWidth=w; g.strokeStyle=c; for(const r of ROADS){ g.beginPath(); g.moveTo(...r[0]); for(const p of r.slice(1)) g.lineTo(...p); g.stroke(); } }
+  // shore: sand, then sea, then foam
+  for(let y=0;y<2400;y+=6){ const x=shoreX(y); g.fillStyle='#3a3526'; g.fillRect(x-80,y,80,6); g.fillStyle='#0b1a2a'; g.fillRect(x,y,3400-x,6); }
+  for(let x=0;x<3400;x+=6){ const y=shoreY(x); g.fillStyle='#3a3526'; g.fillRect(x,y-70,6,70); g.fillStyle='#0b1a2a'; g.fillRect(x,y,6,2400-y); }
+  for(let y=0;y<2400;y+=6) blob(3400,y,1,1,'#0b1a2a');
+  g.strokeStyle='rgba(190,215,230,.22)'; g.lineWidth=3;
+  g.beginPath(); for(let y=0;y<=2400;y+=10) g.lineTo(Math.min(shoreX(y),3400),y); g.stroke();
+  g.beginPath(); for(let x=0;x<=3400;x+=10) g.lineTo(x,Math.min(shoreY(x),2400)); g.stroke();
+  // trees, kept off roads, town and sites
+  const clear=(x,y)=>d2({x,y},HEARTH)<430*430||x>shoreX(y)-110||y>shoreY(x)-110||SITES.some(s=>(s[1]-x)**2+(s[2]-y)**2<90*90)||NODES.some(n=>(n[1]-x)**2+(n[2]-y)**2<70*70)||POIS.some(p=>(p.x-x)**2+(p.y-y)**2<120*120);
+  for(let i=0;i<520;i++){
+    const edge=Math.random()<.55, x=edge?(Math.random()<.5?rand(0,260):rand(0,3000)):rand(0,3000), y=edge&&x>260?rand(0,230):rand(0,2300);
+    if(clear(x,y)) continue; const r=rand(14,30);
+    blob(x+6,y+8,r,r*.8,'rgba(0,0,0,.35)'); blob(x,y,r,r,'#0e1a15'); blob(x-r*.25,y-r*.3,r*.6,r*.6,'#15261d');
+  }
+  // buildings
+  for(const [x,y,w,h,c] of BUILD){
+    g.fillStyle='rgba(0,0,0,.4)'; g.fillRect(x-w/2+8,y-h/2+10,w,h);
+    g.fillStyle=c; g.fillRect(x-w/2,y-h/2,w,h);
+    g.fillStyle='rgba(255,255,255,.06)'; g.fillRect(x-w/2,y-h/2,w,h/2);
+    g.strokeStyle='rgba(0,0,0,.45)'; g.lineWidth=2; g.strokeRect(x-w/2,y-h/2,w,h); g.beginPath(); g.moveTo(x-w/2,y); g.lineTo(x+w/2,y); g.stroke();
+  }
+  g.fillStyle='#4a4a58'; g.fillRect(806,1180,28,28); // chapel bell tower
+  // mill, stones, wreck, sunken chapel
+  blob(480,430,36,36,'#3c3832'); g.strokeStyle='#5a4c3a'; g.lineWidth=9; for(let i=0;i<4;i++){ const a=i*Math.PI/2+.4; g.beginPath(); g.moveTo(480,430); g.lineTo(480+Math.cos(a)*92,430+Math.sin(a)*92); g.stroke(); }
+  for(let i=0;i<9;i++){ const a=i/9*Math.PI*2; blob(1520+Math.cos(a)*95,330+Math.sin(a)*70,11,16,'#5b5d62',a); } blob(1520,330,26,16,'#4a4c50');
+  blob(2330,1770,140,40,'#3a2a1c',-.35); g.strokeStyle='#241a12'; g.lineWidth=5; for(let i=-4;i<=4;i++){ const x=2330+i*28, y=1770-i*10; g.beginPath(); g.moveTo(x-10,y-30); g.lineTo(x+10,y+30); g.stroke(); }
+  g.strokeStyle='#4b4d55'; g.lineWidth=12; g.beginPath(); g.moveTo(230,1400); g.lineTo(350,1400); g.lineTo(350,1470); g.moveTo(230,1400); g.lineTo(230,1520); g.stroke();
+}
+
+// ---- drawing helpers ----
+const S=(x,y)=>[(x-cam.x)*ZOOM+VW/2,(y-cam.y)*ZOOM+VH/2];
+const onScreen=(x,y,m=120)=>{ const [sx,sy]=S(x,y); return sx>-m&&sy>-m&&sx<VW+m&&sy<VH+m; };
+function circle(c,x,y,r,fill){ c.fillStyle=fill; c.beginPath(); c.arc(x,y,r,0,7); c.fill(); }
+const flick=(id,t)=>1+.03*Math.sin(t*13+id*1.7)+.02*Math.sin(t*7.3+id*3.1);
+const visibleShard=s=>me.role==='explorer'&&(G.reveal>0?d2(s,me)<800*800:d2(s,me)<330*330);
+
+function drawLanternLamp(c,x,y,z,col,t,id,out){
+  c.fillStyle='#1c1a18'; c.fillRect(x-2*z,y-4*z,4*z,22*z);
+  c.fillStyle='#2b2620'; c.fillRect(x-7*z,y-18*z,14*z,15*z);
+  if(!out){ const g=c.createRadialGradient(x,y-11*z,0,x,y-11*z,10*z*flick(id,t)); g.addColorStop(0,'#fffbe8'); g.addColorStop(.4,col); g.addColorStop(1,hexA(col,0)); c.fillStyle=g; c.fillRect(x-12*z,y-24*z,24*z,26*z); }
+  else circle(c,x,y-11*z,2*z,'#6b3a1a');
+}
+function drawFoe(c,f,t){
+  const [x,y]=S(f.x,f.y), z=ZOOM, r=f.r*z, wob=Math.sin(t*6+f.ph);
+  if(f.type==='wisp'){ const g=c.createRadialGradient(x,y,0,x,y,r*2.2); g.addColorStop(0,'rgba(200,215,255,.55)'); g.addColorStop(1,'rgba(40,50,90,0)'); c.fillStyle=g; c.beginPath(); c.arc(x,y,r*2.2,0,7); c.fill(); circle(c,x,y,r*.8,'#0a0c14'); }
+  else { const col=f.type==='drowned'?'#0b1b1d':'#050608'; for(let i=0;i<6;i++){ const a=i/6*Math.PI*2+t*.8+f.ph; circle(c,x+Math.cos(a)*r*.45,y+Math.sin(a)*r*.45+wob,r*.75,col); } circle(c,x,y,r*.9,col);
+    if(f.type==='drowned'){ c.strokeStyle='rgba(60,120,110,.5)'; c.lineWidth=2*z; c.beginPath(); c.arc(x,y,r,0,7); c.stroke(); } }
+  if(f.flash>0) circle(c,x,y,r,'rgba(255,255,255,.5)');
+}
+function drawEyes(c,f,t){
+  const [x,y]=S(f.x,f.y), z=ZOOM, e=f.r*.35*z, blink=Math.sin(t*1.3+f.ph*5)>.97?.2:1;
+  const col=f.stun>0?'#fff4d6':f.type==='drowned'?'#7cf2d8':f.type==='wisp'?'#e6eeff':'#d8e4ff';
+  c.fillStyle=col; c.shadowColor=col; c.shadowBlur=8;
+  c.fillRect(x-e-1.5*z,y-2*z,2.6*z,2.6*z*blink); c.fillRect(x+e-1*z,y-2*z,2.6*z,2.6*z*blink);
+  c.shadowBlur=0;
+  if(f.hp<f.maxHp){ c.fillStyle='rgba(0,0,0,.6)'; c.fillRect(x-12*z,y-f.r*z-9*z,24*z,3*z); c.fillStyle='#c9d4f2'; c.fillRect(x-12*z,y-f.r*z-9*z,24*z*Math.max(0,f.hp/f.maxHp),3*z); }
+}
+function drawPlayer(c,p,t){
+  const [x,y]=S(p.x,p.y), z=ZOOM, R=ROLES[p.role];
+  circle(c,x+2*z,y+4*z,11*z,'rgba(0,0,0,.35)');
+  circle(c,x,y,11*z,p.inv>0?'rgba(79,195,181,.4)':'#141922');
+  c.strokeStyle=R.color; c.lineWidth=2.5*z; c.beginPath(); c.arc(x,y,11*z,0,7); c.stroke();
+  circle(c,x+Math.cos(p.face)*7*z,y+Math.sin(p.face)*7*z,3*z,'#e8e2cf');
+  if(p.swing>0){ c.strokeStyle='rgba(255,240,210,.8)'; c.lineWidth=3*z; c.beginPath(); c.arc(x,y,(R.range-8)*z,p.face-.9,p.face+.9); c.stroke(); }
+  if(p.cry>0){ c.strokeStyle='rgba(224,86,75,.5)'; c.lineWidth=2*z; c.beginPath(); c.arc(x,y,17*z+Math.sin(t*10)*2,0,7); c.stroke(); }
+  if(p.flash>0) circle(c,x,y,11*z,'rgba(224,86,75,.45)');
+}
+function drawLighthouse(c,t){
+  const L=G.light, [x,y]=S(L.x,L.y), z=ZOOM;
+  circle(c,x+10*z,y+14*z,38*z,'rgba(0,0,0,.4)');
+  for(let i=4;i>=0;i--) circle(c,x,y-i*9*z,(36-i*4)*z,i%2?'#8d2f2a':'#d9d2c2');
+  circle(c,x,y-50*z,17*z,'#1a1d24'); c.strokeStyle='#a79f8e'; c.lineWidth=2*z; c.beginPath(); c.arc(x,y-50*z,17*z,0,7); c.stroke();
+  if(L.lit) circle(c,x,y-50*z,10*z*flick(7,t),'#fff6d8');
+}
+
+function render(t){
+  const now=t/1000; ctx.setTransform(DPR,0,0,DPR,0,0);
+  if(!G) return;
+  const T=TIERS[G.tier], z=ZOOM;
+  // camera
+  let tx=me.x, ty=me.y;
+  if(G.demo){ tx=1500+Math.cos(now*.05)*700; ty=1050+Math.sin(now*.07)*420; }
+  cam.x+=(tx-cam.x)*.08; cam.y+=(ty-cam.y)*.08;
+  const sh=G.shake; if(sh>.3){ cam.x+=rand(-sh,sh); cam.y+=rand(-sh,sh); }
+  // ground
+  ctx.fillStyle='#0b1a2a'; ctx.fillRect(0,0,VW,VH);
+  const vx=cam.x-VW/2/z, vy=cam.y-VH/2/z;
+  ctx.drawImage(ground,vx*GS,vy*GS,VW/z*GS,VH/z*GS,0,0,VW,VH);
+  // world objects
+  for(const n of G.nodes){ if(!onScreen(n.x,n.y)) continue; const [x,y]=S(n.x,n.y);
+    if(n.kind==='oil'){ circle(ctx,x,y,11*z,'#4b3322'); ctx.strokeStyle='#2a1c12'; ctx.lineWidth=2*z; ctx.beginPath(); ctx.arc(x,y,7*z,0,7); ctx.stroke(); }
+    else if(n.kind==='glass'){ ctx.fillStyle='#3f8c95'; for(let i=0;i<3;i++){ ctx.beginPath(); ctx.moveTo(x+(i-1)*8*z,y-12*z); ctx.lineTo(x+(i-1)*8*z+5*z,y+4*z); ctx.lineTo(x+(i-1)*8*z-5*z,y+4*z); ctx.fill(); } }
+    else { ctx.fillStyle='#6a6e74'; ctx.fillRect(x-10*z,y-5*z,14*z,8*z); ctx.fillRect(x-2*z,y-10*z,10*z,6*z); }
+    for(let i=0;i<n.max;i++) circle(ctx,x-9*z+i*6*z,y+14*z,1.8*z,i<n.ch?'#ebe2c9':'rgba(235,226,201,.2)');
+  }
+  for(const l of G.lanterns){ if(l.special||!onScreen(l.x,l.y,260)) continue; const [x,y]=S(l.x,l.y);
+    if(!l.lit&&l.hp<=0){ ctx.strokeStyle='rgba(235,226,201,.35)'; ctx.lineWidth=2*z; ctx.beginPath(); ctx.arc(x,y,12*z,0,7); ctx.stroke();
+      if(me.role==='crafter'){ ctx.setLineDash([6,8]); ctx.strokeStyle='rgba(242,180,65,.18)'; ctx.beginPath(); ctx.arc(x,y,235*z,0,7); ctx.stroke(); ctx.setLineDash([]); } }
+    else drawLanternLamp(ctx,x,y,z,T.flame,now,l.id,!l.lit);
+  }
+  { const [x,y]=S(MONU.x,MONU.y); ctx.fillStyle='rgba(0,0,0,.4)'; ctx.fillRect(x-8*z,y-4*z,26*z,16*z); ctx.fillStyle='#6d6f78'; ctx.fillRect(x-10*z,y-8*z,20*z,16*z); ctx.fillStyle='#8a8c96'; ctx.fillRect(x-5*z,y-44*z,10*z,40*z); }
+  for(const n of NPCS){ if(!onScreen(n.x,n.y)) continue; const [x,y]=S(n.x,n.y); circle(ctx,x+2*z,y+4*z,10*z,'rgba(0,0,0,.35)'); circle(ctx,x,y,10*z,n.color); circle(ctx,x,y-2*z,4*z,'rgba(0,0,0,.3)'); }
+  if(onScreen(G.light.x,G.light.y,200)) drawLighthouse(ctx,now);
+  const ents=[...G.players.filter(p=>!p.dead&&onScreen(p.x,p.y)).map(p=>[p.y,0,p]), ...G.foes.filter(f=>onScreen(f.x,f.y)).map(f=>[f.y,1,f])].sort((a,b)=>a[0]-b[0]);
+  for(const [,k,e] of ents) k?drawFoe(ctx,e,now):drawPlayer(ctx,e,now);
+  // darkness
+  const won=G.won?Math.min(1,G.dawnT/6):0;
+  dctx.globalCompositeOperation='source-over'; dctx.clearRect(0,0,dark.width,dark.height);
+  dctx.fillStyle=`rgba(${T.dark.join(',')},${T.alpha*(1-won)})`; dctx.fillRect(0,0,dark.width,dark.height);
+  dctx.globalCompositeOperation='destination-out';
+  const hole=(x,y,r,a=1)=>{ const [sx,sy]=S(x,y), R=r*z/2; if(sx+R*2<-10||sy+R*2<-10||sx-R*2>VW+10||sy-R*2>VH+10) return; const g=dctx.createRadialGradient(sx/2,sy/2,R*.15,sx/2,sy/2,R); g.addColorStop(0,`rgba(0,0,0,${a})`); g.addColorStop(.6,`rgba(0,0,0,${a*.85})`); g.addColorStop(1,'rgba(0,0,0,0)'); dctx.fillStyle=g; dctx.beginPath(); dctx.arc(sx/2,sy/2,R,0,7); dctx.fill(); };
+  for(const l of G.L) hole(l.x,l.y,l.r*1.08*(l.flare?1:flick(l.id||3,now)));
+  for(const p of G.players) if(!p.dead) hole(p.x,p.y,p.role==='explorer'?125:95,p===me?.7:.45);
+  for(const f of G.foes) if(f.type==='wisp') hole(f.x,f.y,40,.25);
+  ctx.drawImage(dark,0,0,VW,VH);
+  // warm light pools
+  ctx.globalCompositeOperation='lighter';
+  for(const l of G.L){ if(!onScreen(l.x,l.y,l.r)) continue; const [x,y]=S(l.x,l.y), r=l.r*z*flick(l.id||5,now); const col=l.hearth||l.flare?'#ffb347':T.flame;
+    const g=ctx.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,hexA(col,l.hit>0?.28:.16)); g.addColorStop(1,hexA(col,0)); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); }
+  if(G.light.lit){ const [x,y]=S(G.light.x,G.light.y-50), a=now*(G.won?.6:1.4), len=(G.won?2600:900)*z;
+    for(const off of [0,Math.PI]){ ctx.fillStyle=`rgba(255,240,200,${G.won?.12:.08})`; ctx.beginPath(); ctx.moveTo(x,y); ctx.arc(x,y,len,a+off-.12,a+off+.12); ctx.fill(); } }
+  if(won>0){ ctx.fillStyle=`rgba(255,170,120,${.18*won})`; ctx.fillRect(0,0,VW,VH); }
+  ctx.globalCompositeOperation='source-over';
+  // things that shine through the dark
+  for(const l of G.lanterns){ if(l.special||!l.lit||!onScreen(l.x,l.y)) continue; const [x,y]=S(l.x,l.y); circle(ctx,x,y-11*z,3.2*z*flick(l.id,now),'#fffbe8');
+    if(l.hit>0){ ctx.strokeStyle='rgba(224,86,75,.55)'; ctx.lineWidth=2*z; ctx.beginPath(); ctx.arc(x,y,l.r*z,0,7); ctx.stroke(); }
+    if(l.hp<l.maxHp||l.fuel<40){ ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(x-16*z,y+14*z,32*z,6*z); ctx.fillStyle='#f2b441'; ctx.fillRect(x-16*z,y+14*z,32*z*l.hp/l.maxHp,3*z); ctx.fillStyle='#b9c6d6'; ctx.fillRect(x-16*z,y+17*z,32*z*l.fuel/100,3*z); } }
+  if(G.light.lit&&onScreen(G.light.x,G.light.y)){ const [x,y]=S(G.light.x,G.light.y); drawLighthouse(ctx,now); if(G.kindle){ ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(x-40*z,y+42*z,80*z,6*z); ctx.fillStyle='#fff1c4'; ctx.fillRect(x-40*z,y+42*z,80*z*G.light.hp/G.light.maxHp,6*z); } }
+  for(const f of G.foes) if(onScreen(f.x,f.y)) drawEyes(ctx,f,now);
+  for(const s of G.shards){ if(!visibleShard(s)||!onScreen(s.x,s.y)) continue; const [x,y]=S(s.x,s.y), p=.6+.4*Math.sin(now*4+s.ph);
+    const g=ctx.createRadialGradient(x,y,0,x,y,26*z); g.addColorStop(0,`rgba(160,255,240,${.5*p})`); g.addColorStop(1,'rgba(79,195,181,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,26*z,0,7); ctx.fill();
+    ctx.fillStyle='#e9fffb'; ctx.beginPath(); ctx.moveTo(x,y-9*z); ctx.lineTo(x+5*z,y); ctx.lineTo(x,y+9*z); ctx.lineTo(x-5*z,y); ctx.fill(); }
+  for(const it of G.items){ if(!onScreen(it.x,it.y)) continue; const [x,y]=S(it.x,it.y), b=Math.sin(now*3)*3*z; circle(ctx,x,y,6*z,'#f2d27a'); ctx.fillStyle='#f2b441'; ctx.font=`600 ${16*z}px ${getComputedStyle(document.body).getPropertyValue('--f-mono')||'monospace'}`; ctx.textAlign='center'; ctx.fillText('!',x,y-14*z+b); }
+  // labels
+  ctx.textAlign='center'; ctx.font=`600 ${Math.round(11*Math.max(z,1))}px "IBM Plex Mono",monospace`;
+  for(const n of NPCS){ if(!onScreen(n.x,n.y)) continue; const [x,y]=S(n.x,n.y); const q=Object.entries(QUESTS).find(([id,q])=>q.npc===n.id);
+    ctx.fillStyle='#ebe2c9'; ctx.fillText(n.name,x,y-18*z);
+    if(q&&!G.demo){ const st=G.quests[q[0]]; const mark=!st?'!':st==='carry'?'?':''; if(mark){ ctx.fillStyle='#f2b441'; ctx.font=`600 ${18*z}px "IBM Plex Mono",monospace`; ctx.fillText(mark,x,y-32*z); ctx.font=`600 ${Math.round(11*Math.max(z,1))}px "IBM Plex Mono",monospace`; } } }
+  { const [x,y]=S(MONU.x,MONU.y); ctx.fillStyle='rgba(235,226,201,.6)'; ctx.fillText('Monument',x,y+22*z); }
+  for(const poi of POIS) if(G.found.has(poi.id)&&onScreen(poi.x,poi.y)){ const [x,y]=S(poi.x,poi.y); ctx.fillStyle='rgba(235,226,201,.35)'; ctx.font=`italic ${Math.round(18*z)}px "IM Fell English",Georgia,serif`; ctx.fillText(poi.name,x,y-60*z); }
+  ctx.font=`600 ${Math.round(11*Math.max(z,1))}px "IBM Plex Mono",monospace`;
+  for(const p of G.players){ if(p.dead||!onScreen(p.x,p.y)) continue; const [x,y]=S(p.x,p.y);
+    ctx.fillStyle=p===me?'#f2d27a':hexA(ROLES[p.role].color,.9); ctx.fillText(p.name,x,y-18*z);
+    if(p.hp<p.maxHp){ ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(x-14*z,y+15*z,28*z,3*z); ctx.fillStyle='#e0564b'; ctx.fillRect(x-14*z,y+15*z,28*z*p.hp/p.maxHp,3*z); }
+    if(p.chan){ ctx.strokeStyle='#f2d27a'; ctx.lineWidth=3*z; ctx.beginPath(); ctx.arc(x,y,16*z,-Math.PI/2,-Math.PI/2+Math.PI*2*p.chan.t/p.chan.dur); ctx.stroke(); }
+    for(let i=0;i<p.carry.length;i++){ circle(ctx,x-5*z+i*10*z,y-30*z,3.5*z,hexA('#9ff5e6',.3+.7*p.carry[i].glow/100)); } }
+  if(!G.demo&&me.goal&&me.goal.k==='move'){ const [x,y]=S(me.goal.x,me.goal.y); ctx.strokeStyle='rgba(242,210,122,.6)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(x,y,7+Math.sin(now*8)*2,0,7); ctx.stroke(); }
+  // effects
+  for(const f of G.fx){ const [x,y]=S(f.x,f.y), k=f.t/f.dur;
+    ctx.globalAlpha=1-k;
+    if(f.k==='ring'){ ctx.strokeStyle=f.col; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(x,y,f.r*z*(.3+.7*k),0,7); ctx.stroke(); }
+    else if(f.k==='burst'){ for(let i=0;i<8;i++){ const a=i/8*Math.PI*2; circle(ctx,x+Math.cos(a)*f.r*z*k,y+Math.sin(a)*f.r*z*k,2.5*z,f.col); } }
+    else if(f.k==='spark'){ circle(ctx,x+rand(-4,4),y+rand(-4,4),2*z,f.col); }
+    else if(f.k==='trail'){ const [x2,y2]=S(f.x2,f.y2); ctx.strokeStyle=f.col; ctx.lineWidth=6*z*(1-k); ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x2,y2); ctx.stroke(); }
+    ctx.globalAlpha=1; }
+  ctx.font=`600 ${Math.round(12*Math.max(z,1))}px "IBM Plex Mono",monospace`;
+  for(const f of G.floats){ const [x,y]=S(f.x,f.y); ctx.globalAlpha=Math.min(1,f.t); ctx.fillStyle=f.col; ctx.fillText(f.txt,x,y); ctx.globalAlpha=1; }
+  // drifting mist
+  ctx.globalCompositeOperation='lighter';
+  for(let i=0;i<5;i++){ const x=((now*12*(i+1)+i*400)%(VW+600))-300, y=VH*(.2+.15*i)+Math.sin(now*.2+i)*30; const g=ctx.createRadialGradient(x,y,0,x,y,260); g.addColorStop(0,'rgba(110,130,170,.05)'); g.addColorStop(1,'rgba(110,130,170,0)'); ctx.fillStyle=g; ctx.fillRect(x-260,y-260,520,520); }
+  ctx.globalCompositeOperation='source-over';
+}
+
+// ---- minimap ----
+const mini=$('mini'), mctx=mini.getContext('2d'), mbase=document.createElement('canvas');
+function buildMini(){ mini.width=mbase.width=Math.round(180*DPR); mini.height=mbase.height=Math.round(124*DPR); const m=mbase.getContext('2d'); m.drawImage(ground,0,0,3200*GS,2200*GS,0,0,mini.width,mini.height); m.fillStyle='rgba(5,8,16,.35)'; m.fillRect(0,0,mini.width,mini.height); }
+function renderMini(){
+  const kx=180/3200, ky=124/2200, m=mctx;
+  m.setTransform(1,0,0,1,0,0); m.drawImage(mbase,0,0); m.setTransform(DPR,0,0,DPR,0,0);
+  m.fillStyle='rgba(3,5,10,.82)';
+  for(let y=0;y<28;y++) for(let x=0;x<40;x++) if(!G.fog[y*40+x]) m.fillRect(x*80*kx,y*80*ky,80*kx+.5,80*ky+.5);
+  for(const l of G.L){ m.fillStyle=l.flare?'rgba(242,180,65,.25)':hexA(l.hearth?'#ffb347':TIERS[G.tier].flame,.22); m.beginPath(); m.arc(l.x*kx,l.y*ky,l.r*kx,0,7); m.fill(); }
+  for(const l of G.lanterns){ if(l.special) continue; m.fillStyle=l.lit?'#ffd479':l.hp>0?'#8a6a3a':'#4b5160'; m.fillRect(l.x*kx-1.5,l.y*ky-1.5,3,3); }
+  m.fillStyle=G.light.lit?'#fff6d8':'#8e96ab'; m.beginPath(); m.arc(G.light.x*kx,G.light.y*ky,3,0,7); m.fill();
+  for(const f of G.foes) if(f.wave){ m.fillStyle='#e0564b'; m.fillRect(f.x*kx-1,f.y*ky-1,2,2); }
+  for(const it of G.items){ m.fillStyle='#f2b441'; m.fillRect(it.x*kx-2,it.y*ky-2,4,4); }
+  if(me.role==='explorer') for(const s of G.shards) if(visibleShard(s)){ m.fillStyle='#9ff5e6'; m.fillRect(s.x*kx-1.5,s.y*ky-1.5,3,3); }
+  for(const p of G.players){ if(p.dead||p===me) continue; m.fillStyle=ROLES[p.role].color; m.fillRect(p.x*kx-1,p.y*ky-1,2,2); }
+  if(!me.dead){ m.fillStyle='#f2d27a'; m.beginPath(); m.arc(me.x*kx,me.y*ky,3,0,7); m.fill(); m.strokeStyle='#000'; m.lineWidth=1; m.stroke(); }
+}
+
+// ---- a lantern for the rewards screen and the home ----
+function drawHomeLantern(c,x,y,s,col,t,id,gutter){
+  const f=gutter?(.35+.25*Math.abs(Math.sin(t*3+id))):flick(id,t);
+  const g=c.createRadialGradient(x,y-20*s,0,x,y-20*s,120*s*f); g.addColorStop(0,hexA(col,.35)); g.addColorStop(1,hexA(col,0));
+  c.globalCompositeOperation='lighter'; c.fillStyle=g; c.fillRect(x-130*s,y-150*s,260*s,260*s); c.globalCompositeOperation='source-over';
+  c.strokeStyle='#8a7350'; c.lineWidth=2*s; c.beginPath(); c.arc(x,y-50*s,8*s,Math.PI,0); c.stroke();
+  c.fillStyle='#2b2620'; c.fillRect(x-16*s,y-44*s,32*s,6*s); c.fillRect(x-18*s,y,36*s,6*s);
+  c.fillStyle=hexA(col,.18); c.fillRect(x-14*s,y-38*s,28*s,38*s);
+  c.strokeStyle='#3a332a'; c.lineWidth=3*s; c.strokeRect(x-14*s,y-38*s,28*s,38*s); c.beginPath(); c.moveTo(x,y-38*s); c.lineTo(x,y); c.stroke();
+  const fl=c.createRadialGradient(x,y-16*s,0,x,y-16*s,11*s*f); fl.addColorStop(0,'#fffdf2'); fl.addColorStop(.45,col); fl.addColorStop(1,hexA(col,0));
+  c.fillStyle=fl; c.beginPath(); c.ellipse(x,y-16*s,7*s*f,12*s*f,0,0,7); c.fill();
+}
+
+// ================= STORAGE: monument (shared when the page has a db) + home lanterns (per viewer) =================
+const store={ get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } }, set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} } };
+const Monu={ db:null, list:[], shared:false,
+  async init(){ this.list=store.get('hollowmere.monument',[]); renderMonu();
+    try{ this.db=window.claude&&window.claude.use?await window.claude.use('db'):null; }catch(e){ this.db=null; }
+    if(this.db) await this.load(); },
+  async load(){
+    try{ const s=await this.db.collection('monument').orderBy('ts','desc').limit(40).get(); this.list=s.docs.map(d=>d.data()); this.shared=true; }
+    catch(e){ this.shared=false; }
+    renderMonu();
+  },
+  async add(e){
+    const loc=store.get('hollowmere.monument',[]); loc.unshift(e); store.set('hollowmere.monument',loc.slice(0,40));
+    if(!this.shared) this.list=loc;
+    if(this.db){ try{ await this.db.collection('monument').add(e); await this.load(); }catch(err){ this.shared=false; this.list=loc; } }
+    renderMonu();
+  } };
+function monuEntry(e){
+  const d=document.createElement('div'); d.className='e';
+  const s=document.createElement('strong'), sp=document.createElement('span'), h=document.createElement('span');
+  const date=new Date(Number(e.ts)||Date.now()).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
+  s.textContent=`${String(e.outcome)==='Dawn'?'Dawn broke':'Left in darkness'} · ${String(e.tier||'The Long Night')}`;
+  sp.textContent=`${date} · ${Number(e.hours)||0} hours of darkness · dawn ${Number(e.dawn)||0}% · ${Number(e.pop)||0} online`;
+  h.textContent=`Lamplighter ${String(e.craft||'—')} · Warden ${String(e.combat||'—')} · Tidewalker ${String(e.explore||'—')} · carved for ${String(e.name||'someone')}, ${String(e.title||'')}`;
+  d.append(s,sp,h); return d;
+}
+function renderMonu(){
+  for(const [id,src] of [['tMonu','tSrc'],['moList','moSrc']]){
+    const el=$(id); el.replaceChildren(...(Monu.list.length?Monu.list.map(monuEntry):[Object.assign(document.createElement('p'),{className:'hint',textContent:'The stone is blank. No siege has ended yet.'})]));
+    $(src).textContent=Monu.shared?'Server-wide: every siege anyone has finished on this page is carved here.':'Carved in this browser. Published with a shared store, it becomes server-wide.';
+  }
+}
+
+// ================= UI =================
+const OVS=['dlg','story','menu','journal','monuOv','end','home','title'];
+const isPaused=()=>OVS.some(id=>!$(id).hidden)||document.hidden;
+const UI={
+  npc(n){
+    const q=Object.entries(QUESTS).find(([,q])=>q.npc===n.id), btns=[];
+    $('dlgFace').textContent=n.name[0]; $('dlgFace').style.background=n.color;
+    $('dlgName').textContent=n.name; $('dlgRole').textContent=n.role;
+    let body=n.id==='esk'?ESK[Math.min(G.truth+(G.won?1:0),4)]:memoryOf(n.id), note='';
+    if(n.id==='esk'){ const low=PILLARS.slice().sort((a,b)=>G.pil[a]-G.pil[b])[0]; note=`Esk squints at the dawn meter: "${PNAME[low]} is lagging. ${low==='craft'?'The lanterns need hands.':low==='combat'?'The zones need holding.':'The glass needs finding.'}"`; }
+    if(q){ const [id,Q]=q, st=G.quests[id];
+      if(!st){ body+=`\n\n"${Q.ask}"`; btns.push(['Accept: '+Q.name,()=>{ acceptQuest(id); close('dlg'); }]); }
+      else if(st==='active') note=`${Q.name}: find the ${Q.item} at ${Q.where}.`;
+      else if(st==='carry'&&me.item===id){ btns.push([`Hand over the ${Q.item}`,()=>{ completeQuest(id); UI.npc(n); $('dlgBody').textContent=`"${Q.thanks}"\n\n${memoryOf(n.id)}`; }]); }
+      else if(st==='done') note=`${Q.name} · complete. Their memory of Silas changed.`;
+    }
+    $('dlgBody').textContent=body; $('dlgBody').style.whiteSpace='pre-line'; $('dlgNote').textContent=note;
+    btns.push(['Farewell',()=>close('dlg')]);
+    $('dlgBtns').replaceChildren(...btns.map(([t,f],i)=>{ const b=document.createElement('button'); b.className='btn'+(i?' ghost':''); b.textContent=t; b.onclick=f; return b; }));
+    open('dlg');
+  },
+  monument(){ renderMonu(); open('monuOv'); },
+};
+function open(id){ $(id).hidden=false; const b=$(id).querySelector('button'); if(b) b.focus({preventScroll:true}); for(const k in KEYS) KEYS[k]=false; }
+function close(id){ $(id).hidden=true; cv.focus?.(); }
+function showStory(s){ $('storyK').textContent=s.k; $('storyT').textContent=s.title; $('storyB').textContent=s.text; $('storyB').style.whiteSpace='pre-line'; $('storyOk').textContent=s.end?'See the dawn':'Keep the light'; $('storyOk').onclick=()=>{ close('story'); if(s.end) showEnd(true); }; open('story'); }
+function showJournal(){
+  $('jObj').replaceChildren(...[...$('trackList').children].map(e=>e.cloneNode(true)));
+  $('jTruth').replaceChildren(...(G.journal.truth.length?G.journal.truth:[{title:'Nothing yet',text:'Fill the dawn meter to 25% to learn the first truth.'}]).map(t=>Object.assign(document.createElement('li'),{textContent:`${t.title}: ${t.text}`})));
+  $('jNpc').replaceChildren(...['maud','nell','cale','harrow'].map(id=>{ const n=NPCS.find(n=>n.id===id), p=document.createElement('p'); p.style.margin='0 0 6px'; p.textContent=`${n.name}: "${memoryOf(id)}"`; return p; }));
+  $('jMem').replaceChildren(...(G.journal.mems.length?G.journal.mems:[{m:'No shards have reached the lighthouse yet.',by:''}]).map(x=>Object.assign(document.createElement('li'),{textContent:x.by?`${x.m} (returned by ${x.by})`:x.m})));
+  open('journal');
+}
+const titleFor=(p,tier)=>`${TIERS[tier].prefix?TIERS[tier].prefix+' ':''}${ROLES[p.role].title} of Hollowmere`;
+function heroes(){ const h={}; for(const k of PILLARS){ const b=G.players.reduce((a,p)=>p.contrib[k]>(a?a.contrib[k]:0)?p:a,null); h[k]=b?b.name:'—'; } return h; }
+function showEnd(won){
+  if(G.over) return; G.over=true;
+  const h=heroes(), tier=G.tier, T=TIERS[tier], d=Math.round(dawn()*100);
+  const first=h[ROLES[me.role].pillar]===me.name;
+  const title=titleFor(me,tier)+(first&&won?' · First Light':'');
+  const lamp=won?T.lamp:'Guttering Lantern', col=won?T.flame:'#b8732f';
+  $('endK').textContent=won?`The siege is over after ${G.hours} hours of darkness`:'You left before the dawn';
+  $('endT').textContent=won?'Dawn over Hollowmere':'The night goes on without you';
+  $('endP').textContent=won?`Hollowmere Light burns again at ${T.name.toLowerCase().replace('the ','the ')}. Silas Penhallow is remembered, and remembered right.`:`The dawn meter stood at ${d}% when you walked away. Somewhere behind you the ${G.lanterns.filter(l=>l.lit&&!l.special).length} lanterns still burning are holding the Gloam back.`;
+  const rows=[['Outcome',won?'Dawn':'Left in darkness'],['Deepest night',T.name],['Hours of darkness',G.hours],['Dawn meter',d+'%'],['Lanterns lit',G.stats.built],['Waves held',G.stats.held],['Lanterns lost',G.stats.lost],['Gloam slain',G.stats.kills],['Shards returned',G.stats.shards],['Peak online',G.stats.peak],
+    ['Your craft · combat · explore',PILLARS.map(k=>Math.round(me.contrib[k])).join(' · ')],['Your renown',Math.round(me.renown)]];
+  $('endStats').replaceChildren(...rows.flatMap(([a,b])=>[Object.assign(document.createElement('dt'),{textContent:a}),Object.assign(document.createElement('dd'),{textContent:String(b)})]));
+  $('endTitle').textContent=title;
+  $('endLampT').textContent=`Housing item: ${lamp}. ${won?'Its flame keeps the colour of the night you broke.':'It sputters, the way the siege did when you left.'}`;
+  const entry={ ts:Date.now(), outcome:won?'Dawn':'Abandoned', tier:T.name, hours:G.hours, dawn:d, pop:G.players.length, name:me.name, title, craft:h.craft, combat:h.combat, explore:h.explore };
+  $('endMonu').textContent=`${won?'Here the town of Hollowmere kept the light through':'Here the town of Hollowmere endured'} ${G.hours} hours of ${T.name.replace('The ','')}. Lamplighter ${h.craft}. Warden ${h.combat}. Tidewalker ${h.explore}.${won?' The keeper was remembered.':''}`;
+  Monu.add(entry);
+  const lamps=store.get('hollowmere.lanterns',[]); lamps.push({ ts:entry.ts, lamp, col, gutter:!won, title, tier:T.name, won }); store.set('hollowmere.lanterns',lamps.slice(-12));
+  endLamp={ col, gutter:!won }; $('endLamp').width=360*DPR; $('endLamp').height=150*DPR;
+  for(const id of OVS) $(id).hidden=true; $('hud').hidden=true; open('end');
+}
+let endLamp=null;
+
+// ---- home ----
+const hcv=$('homecv'), hctx=hcv.getContext('2d');
+let homeLamps=[];
+function showHome(){
+  for(const id of OVS) $(id).hidden=true; $('home').hidden=false;
+  homeLamps=store.get('hollowmere.lanterns',[]);
+  $('homeCap').textContent=homeLamps.length?'Your cottage. Every lantern you carry home from the Long Night keeps the mood of the siege it came from. Tap one to remember it.':'Your cottage is dark. See a Long Night through, or at least try, and you will carry a lantern home.';
+  $('homeBack').focus();
+}
+function renderHome(t){
+  const w=hcv.clientWidth, h=hcv.clientHeight; if(!w) return;
+  if(hcv.width!==Math.round(w*DPR)||hcv.height!==Math.round(h*DPR)){ hcv.width=Math.round(w*DPR); hcv.height=Math.round(h*DPR); }
+  const c=hctx, now=t/1000; c.setTransform(DPR,0,0,DPR,0,0);
+  c.fillStyle='#1b1410'; c.fillRect(0,0,w,h);
+  for(let x=0;x<w;x+=46){ c.fillStyle=x/46%2?'#1f1712':'#1c1511'; c.fillRect(x,0,46,h*.72); }
+  c.fillStyle='#140f0c'; c.fillRect(0,h*.72,w,h*.28);
+  const wx=w*.5, wy=h*.12, ww=Math.min(260,w*.4), wh=h*.3, dawnWin=homeLamps.some(l=>l.won);
+  const sky=c.createLinearGradient(0,wy,0,wy+wh); sky.addColorStop(0,dawnWin?'#40527a':'#070b18'); sky.addColorStop(1,dawnWin?'#e9a77a':'#121a30');
+  c.fillStyle=sky; c.fillRect(wx-ww/2,wy,ww,wh); c.strokeStyle='#3a2a1e'; c.lineWidth=8; c.strokeRect(wx-ww/2,wy,ww,wh); c.beginPath(); c.moveTo(wx,wy); c.lineTo(wx,wy+wh); c.moveTo(wx-ww/2,wy+wh/2); c.lineTo(wx+ww/2,wy+wh/2); c.stroke();
+  if(!dawnWin) for(let i=0;i<14;i++){ c.fillStyle='rgba(255,255,255,.6)'; c.fillRect(wx-ww/2+((i*53)%ww),wy+((i*37)%(wh*.9)),1.5,1.5); }
+  const shelfY=h*.62; c.fillStyle='#3a2a1e'; c.fillRect(w*.08,shelfY,w*.84,10);
+  c.fillStyle='rgba(4,3,2,.62)'; c.fillRect(0,0,w,h);
+  const n=homeLamps.length, s=Math.min(1.3,Math.max(.8,w/900));
+  homeLamps.forEach((l,i)=>{ const x=w*.12+(w*.76)*(n===1?.5:i/(n-1)); l._x=x; l._y=shelfY; drawHomeLantern(c,x,shelfY,s,l.col,now,i+1,l.gutter); });
+}
+hcv.addEventListener('pointerdown',e=>{ const r=hcv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+  const l=homeLamps.find(l=>Math.abs(l._x-x)<40&&y>l._y-90&&y<l._y+20); if(!l) return;
+  $('homeCap').textContent=`${l.lamp} · ${new Date(l.ts).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})}. ${l.won?'Carried home from '+l.tier+' by the '+l.title+'.':'Carried away from a siege left unfinished.'} ${l.won?'"Remember me right."':'It still sputters, as if it is waiting for you to go back.'}`; });
+
+// ---- HUD ----
+let hudT=0, toastT=0, logN=0;
+function fmt(s){ s=Math.max(0,Math.ceil(s)); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; }
+function li(txt,cls){ const e=document.createElement('li'); e.textContent=txt; if(cls) e.className=cls; return e; }
+function drainLog(){
+  const box=$('log'); if(!G.log.length) return;
+  for(const m of G.log.splice(0)){
+    const p=document.createElement('p');
+    if(m.cls==='chat'){ const w=document.createElement('span'); w.className='who'; w.style.color=m.col; w.textContent=`${m.guild&&m.guild!=='—'?'['+m.guild+'] ':''}${m.who}: `; p.append(w,document.createTextNode(m.txt)); }
+    else { p.className=m.cls; p.textContent=m.txt; }
+    box.append(p); logN++;
+  }
+  while(box.children.length>60) box.firstChild.remove();
+  box.scrollTop=box.scrollHeight;
+}
+function hud(dt){
+  drainLog();
+  if(G.toasts.length){ $('toast').textContent=G.toasts.pop(); G.toasts.length=0; $('toast').style.opacity=1; toastT=3.2; }
+  if((toastT-=dt)<=0) $('toast').style.opacity=0;
+  if((hudT-=dt)>0) return; hudT=.12;
+  const T=TIERS[G.tier], cap=G.phase/3;
+  $('phase').textContent=G.kindle?'The Kindling · hold the lighthouse':WATCHES[G.phase];
+  $('tier').textContent=T.short; $('tier').style.color=T.flame;
+  for(const k of PILLARS){ $('seg-'+k).style.width=(G.pil[k]/3*100)+'%'; $('pb-'+k).style.width=(G.pil[k]*100)+'%'; $('pv-'+k).textContent=Math.floor(G.pil[k]*100)+'%'; $('pil-'+k).classList.toggle('held',G.pil[k]>=cap-1e-6&&!G.kindle); }
+  $('dawnPct').textContent=Math.floor(dawn()*100)+'%';
+  $('timer').textContent=G.kindle?`Kindling ${fmt(KINDLE_TIME-G.kindle.t)} · lamp ${Math.round(G.light.hp/G.light.maxHp*100)}%`:G.tier>=3?'No deeper night remains':`${fmt(PHASE_HOURS*HOUR-G.phaseT)} until the night deepens`;
+  $('clock').textContent=`Hour ${G.hours} · danger ×${danger().toFixed(2)}`;
+  $('meName').textContent=me.name; $('meTitle').textContent=`${ROLES[me.role].name} · ${titleFor(me,G.tier)}`;
+  $('hpFill').style.width=(me.hp/me.maxHp*100)+'%';
+  const bag=[`<span>Oil ${me.bag.oil}</span>`,`<span>Glass ${me.bag.glass}</span>`,`<span>Iron ${me.bag.iron}</span>`];
+  if(me.role==='explorer') bag.push(`<span class="c-explore">Shards ${me.carry.length}/2${me.carry.length?' · '+me.carry.map(s=>Math.round(s.glow)+'%').join(' '):''}</span>`);
+  if(me.item) bag.push(`<span class="c-craft">${QUESTS[me.item].item}</span>`);
+  if(me.dead) bag.unshift(`<span class="c-combat">Returning in ${Math.ceil(me.dead)}s</span>`);
+  $('bag').innerHTML=bag.join('');
+  $('srvInfo').innerHTML=`Hollowmere-3 · <strong>${G.players.length}</strong> online<br>Scaled ×${G.scale.toFixed(2)} to active players<br>Renown <strong>${Math.round(me.renown)}</strong> · rewards ×${T.reward}`;
+  const tr=[], lit=G.lanterns.filter(l=>l.lit&&!l.special).length, waves=G.waves.filter(w=>!w.L.special);
+  if(G.kindle) tr.push(li(`Hold the lighthouse: ${fmt(KINDLE_TIME-G.kindle.t)} left`,'warn'));
+  else tr.push(li(`Fill every pillar to ${Math.round(cap*100)}% before the watch ends`));
+  if(me.role==='crafter') tr.push(li(`Lanterns lit ${lit}/10 · build costs 2 oil, 1 glass, 1 iron`));
+  if(me.role==='fighter') tr.push(li(waves.length?`${waves.length} wave${waves.length>1?'s':''} attacking: ${waves.map(w=>w.L.hearth?'Hearth':w.L.name).join(', ')}`:`No waves right now · next in ${Math.max(0,Math.ceil(G.waveT))}s`,waves.length?'warn':''));
+  if(me.role==='explorer') tr.push(li(me.carry.length?'Carry your shards to the lighthouse, through the light':'Find glimmering shards in the dark (Seeker Flare helps)'));
+  if(me.role!=='fighter'&&waves.length) tr.push(li(`Wave at ${waves[0].L.hearth?'the Hearth':waves[0].L.name}`,'warn'));
+  for(const [id,q] of Object.entries(QUESTS)){ const st=G.quests[id]; if(st) tr.push(li(st==='done'?q.name:st==='carry'?`${q.name}: return the ${q.item}`:`${q.name}: search ${q.where}`,st==='done'?'done':'')); }
+  if(Object.keys(G.quests).length<4) tr.push(li(`Townsfolk by the hearth have errands (!)`));
+  $('trackList').replaceChildren(...tr);
+  for(const k of ['q','r']){ const b=$('b-'+k), A=ROLES[me.role][k]; b.querySelector('.n').textContent=A.name; b.title=`${A.name} (${k.toUpperCase()})`; const c=me.cd[k]; b.querySelector('.cd').style.height=(c/A.cd*100)+'%'; b.querySelector('.cdt').textContent=c>0?Math.ceil(c):''; }
+}
+
+// ---- input ----
+function worldAt(cx,cy){ return { x:(cx-VW/2)/ZOOM+cam.x, y:(cy-VH/2)/ZOOM+cam.y }; }
+function targetAt(w){
+  const f=nearest(G.foes,w,40); if(f) return { k:'attack', ref:f };
+  const cands=[...NPCS,MONU,G.light,...G.lanterns.filter(l=>!l.special),...G.nodes,...G.items,...G.shards.filter(visibleShard)];
+  const hitR=r=>r.t==='light'?80:r.t==='site'?36:30;
+  let best=null, bd=1e9; for(const r of cands){ const d=dist(r,w); if(d<hitR(r)&&d<bd){ bd=d; best=r; } }
+  return best?{ k:'use', ref:best }:{ k:'move', x:w.x, y:w.y };
+}
+function useNearest(){
+  const f=nearestFoe(me,ROLES[me.role].range+60); if(f){ me.goal={ k:'attack', ref:f }; me.chan=null; return; }
+  const cands=[...NPCS,MONU,G.light,...G.lanterns.filter(l=>!l.special),...G.nodes,...G.items,...G.shards.filter(visibleShard)];
+  const r=nearest(cands,me,130); if(r){ me.goal={ k:'use', ref:r }; me.chan=null; } else toast('Nothing to use nearby.');
+}
+// press and hold on the map keeps walking toward the pointer (touch has no WASD); the last finger down steers
+let steer=null;
+cv.addEventListener('pointerdown',e=>{ if(!G||G.demo||G.over||me.dead) return; const g=targetAt(worldAt(e.clientX,e.clientY)); if(g.k==='move'){ const p={x:g.x,y:g.y}; land(p); g.x=p.x; g.y=p.y; } me.goal=g; me.chan=null;
+  steer=g.k==='move'?{ id:e.pointerId, x:e.clientX, y:e.clientY, t:e.timeStamp }:null; if(steer) cv.setPointerCapture?.(e.pointerId); });
+cv.addEventListener('pointermove',e=>{ if(steer&&e.pointerId===steer.id){ steer.x=e.clientX; steer.y=e.clientY; } });
+// a quick tap still walks all the way; letting go after a hold stops you
+for(const t of ['pointerup','pointercancel','lostpointercapture']) cv.addEventListener(t,e=>{ if(!steer||e.pointerId!==steer.id) return; if(e.timeStamp-steer.t>300&&me.goal?.k==='move') me.goal=null; steer=null; });
+function steerTick(){ if(!steer) return; if(G.demo||G.over||me.dead||isPaused()){ steer=null; return; } const p=worldAt(steer.x,steer.y); land(p); me.goal={ k:'move', x:p.x, y:p.y }; }
+mini.addEventListener('pointerdown',e=>{ if(!G||G.demo||me.dead) return; const r=mini.getBoundingClientRect(); const p={ x:(e.clientX-r.left)/r.width*3200, y:(e.clientY-r.top)/r.height*2200 }; land(p); me.goal={ k:'move', x:p.x, y:p.y }; me.chan=null; });
+const KMAP={ w:'up', arrowup:'up', s:'down', arrowdown:'down', a:'left', arrowleft:'left', d:'right', arrowright:'right' };
+addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(e.target.tagName==='INPUT'){ if(k==='escape') e.target.blur(); return; }
+  if(!G||G.demo||G.over) return;
+  if(k==='escape'){ const top=['dlg','story','journal','monuOv'].find(id=>!$(id).hidden); if(top){ if(top!=='story') close(top); } else if(!$('menu').hidden) close('menu'); else open('menu'); e.preventDefault(); return; }
+  if(isPaused()) return;
+  if(KMAP[k]){ KEYS[KMAP[k]]=true; e.preventDefault(); }
+  else if(k===' '){ useNearest(); e.preventDefault(); }
+  else if(k==='q'||k==='r') ability(me,k);
+  else if(k==='j') showJournal();
+  else if(k==='enter'){ $('chatin').focus(); e.preventDefault(); }
+});
+addEventListener('keyup',e=>{ const k=KMAP[e.key.toLowerCase()]; if(k) KEYS[k]=false; });
+addEventListener('blur',()=>{ for(const k in KEYS) KEYS[k]=false; });
+$('b-use').onclick=()=>useNearest(); $('b-q').onclick=()=>ability(me,'q'); $('b-r').onclick=()=>ability(me,'r');
+$('b-j').onclick=()=>showJournal(); $('b-m').onclick=()=>open('menu');
+$('mResume').onclick=()=>close('menu'); $('mJournal').onclick=()=>{ close('menu'); showJournal(); };
+$('mAbandon').onclick=()=>{ const b=$('mAbandon'); if(b.dataset.sure){ delete b.dataset.sure; b.textContent='Leave the siege'; close('menu'); showEnd(false); } else { b.dataset.sure=1; b.textContent='Really leave? Click again'; } };
+$('jClose').onclick=()=>close('journal'); $('moClose').onclick=()=>close('monuOv');
+$('chatf').onsubmit=e=>{ e.preventDefault(); const v=$('chatin').value.trim(); $('chatin').value=''; $('chatin').blur(); if(!v||!G||G.demo) return;
+  chat(me,v); const b=pick(G.players.filter(p=>p.bot&&!p.dead)); if(b&&Math.random()<.7) setTimeout(()=>{ if(G&&!G.over) chat(b,pick(CHAT.reply)); },rand(900,2600)); };
+
+// ---- title ----
+let pickRole='crafter', pickPop=12;
+function buildTitle(){
+  $('roles').replaceChildren(...Object.entries(ROLES).map(([id,R])=>{ const b=document.createElement('button'); b.className='role'; b.style.color=R.color; b.setAttribute('aria-pressed',id===pickRole);
+    b.innerHTML=`<h3></h3><span class="t"></span><p></p><span class="lbl"></span>`; b.querySelector('h3').textContent=R.name; b.querySelector('.t').textContent=`Title: ${R.title}`; b.querySelector('p').textContent=R.blurb; b.querySelector('.lbl').textContent=`Q ${R.q.name} · R ${R.r.name}`;
+    b.onclick=()=>{ pickRole=id; buildTitle(); }; return b; }));
+  for(const b of $('pop').children){ b.setAttribute('aria-pressed',Number(b.dataset.p)===pickPop); b.onclick=()=>{ pickPop=Number(b.dataset.p); buildTitle(); }; }
+  $('nameIn').value=$('nameIn').value||store.get('hollowmere.name','Wren');
+}
+function startGame(){
+  const name=$('nameIn').value.trim()||'Wren'; store.set('hollowmere.name',name);
+  newGame({ name, role:pickRole, pop:pickPop });
+  $('log').replaceChildren(); for(const id of OVS) $(id).hidden=true; $('hud').hidden=false; cam.x=me.x; cam.y=me.y;
+  toast(`${WATCHES[1]}. Tap or click to move, hold to keep walking.`);
+}
+function toTitle(){ for(const id of OVS) $(id).hidden=true; $('hud').hidden=true; demo(); $('title').hidden=false; buildTitle(); renderMonu(); }
+function demo(){ newGame({ name:'Keeper', role:'fighter', pop:12, auto:true }); G.demo=true; for(let i=0;i<40*20;i++) step(1/20); G.log.length=0; G.toasts.length=0; G.stories.length=0; }
+$('startBtn').onclick=startGame; $('homeBtn').onclick=showHome; $('homeBack').onclick=toTitle;
+$('endHome').onclick=showHome; $('endAgain').onclick=toTitle;
+
+// ---- loop ----
+let last=0, acc=0;
+function frame(ts){
+  requestAnimationFrame(frame);
+  const dt=Math.min(.1,(ts-last)/1000||0); last=ts;
+  if(!$('home').hidden){ renderHome(ts); return; }
+  if(G&&!G.over&&(!isPaused()||G.demo)){ acc+=dt; while(acc>=1/60){ step(1/60); acc-=1/60; } } else acc=0;
+  render(ts);
+  if(G&&G.demo){ G.log.length=0; G.toasts.length=0; G.stories.length=0; }
+  if(G&&!G.demo&&!G.over){
+    steerTick(); renderMini(); hud(dt);
+    if(G.won&&G.dawnT>5.5&&$('story').hidden) showStory({ k:'The truth, in stages', title:TRUTH[3].title, text:TRUTH[3].text, end:true });
+    else if(!G.won&&G.stories.length&&!isPaused()) showStory(G.stories.shift());
+  }
+  if(endLamp&&!$('end').hidden){ const c=$('endLamp').getContext('2d'); c.setTransform(DPR,0,0,DPR,0,0); c.clearRect(0,0,360,150); drawHomeLantern(c,180,118,1.1,endLamp.col,ts/1000,3,endLamp.gutter); }
+}
+
+// ---- self-test: open with ?selftest (or #selftest). Simulates full sieges with every player on autopilot. ----
+function selftest(){
+  const out=[]; let ok=true;
+  for(const [role,pop] of [['crafter',5],['fighter',12],['explorer',20],['crafter',12]]){
+    newGame({ name:'Test', role, pop, auto:true });
+    let t=0; const dt=1/20;
+    while(t<60*45&&!G.won){ step(dt); t+=dt;
+      for(const k of PILLARS) if(!(G.pil[k]>=0&&G.pil[k]<=G.phase/3+1e-9)) throw new Error('pillar out of range '+k);
+      for(const e of [...G.players,...G.foes]) if(!Number.isFinite(e.x+e.y)) throw new Error('NaN position');
+    }
+    const r={ role, pop, won:G.won, min:+(G.t/60).toFixed(1), tier:G.tier, hours:G.hours, phase:G.phase, dawn:+dawn().toFixed(2), online:G.players.length, ...G.stats, meRenown:Math.round(me.renown), meContrib:PILLARS.map(k=>Math.round(me.contrib[k])).join('/') };
+    out.push(r); if(!G.won) ok=false;
+  }
+  const pre=document.createElement('pre'); pre.id='selftest'; pre.textContent=(ok?'PASS ':'FAIL ')+JSON.stringify(out,null,1);
+  Object.assign(pre.style,{position:'fixed',inset:'0',margin:0,padding:'16px',background:'#000',color:'#0f0',zIndex:99,overflow:'auto',whiteSpace:'pre-wrap'}); document.body.append(pre);
+  console.log(pre.textContent);
+}
+
+// ---- boot ----
+buildGround(); resize(); addEventListener('resize',resize);
+const q=location.search+location.hash;
+if(/selftest/.test(q)) selftest();
+else {
+  const shot=q.match(/shot=(\d+)/), role=(q.match(/role=(\w+)/)||[])[1];
+  if(shot){ newGame({ name:'Wren', role:ROLES[role]?role:'crafter', pop:12, auto:true }); for(let i=0;i<Number(shot[1])*20;i++) step(1/20); for(const id of OVS) $(id).hidden=true; $('hud').hidden=false; G.stories.length=0; cam.x=me.x; cam.y=me.y; }
+  else { toTitle(); Monu.init(); }
+  requestAnimationFrame(frame);
+}
+</script>

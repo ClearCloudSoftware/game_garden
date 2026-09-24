@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Games are copied in from ../ by `pnpm sync-games`.
+    "public/games/**",
   ]),
 ]);
 

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync-games": "rsync -a --delete --exclude test --exclude \"*.test.js\" ../binary_puzzle ../mystery ../the_night_of_hollowmere ../tower_defense ../the_echo_run public/games/"
   },
   "dependencies": {
     "next": "16.1.5",
